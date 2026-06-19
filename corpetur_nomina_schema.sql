@@ -268,7 +268,9 @@ CREATE TABLE dbo.Usuario (
     Nombre              NVARCHAR(120) NOT NULL,
     Email               NVARCHAR(150) NOT NULL UNIQUE,
     Rol                 NVARCHAR(20)  NOT NULL DEFAULT 'CAPTURA',  -- ADMIN, CONTABILIDAD, CAPTURA, LECTURA
-    Activo              BIT NOT NULL DEFAULT 1
+    Activo              BIT NOT NULL DEFAULT 1,
+    -- Hash PBKDF2 de la contraseña (PasswordHasher de ASP.NET). NUNCA texto plano.
+    PasswordHash        NVARCHAR(255) NULL
 );
 
 

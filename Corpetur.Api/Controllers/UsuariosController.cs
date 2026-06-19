@@ -1,17 +1,26 @@
 using Corpetur.Api.Data;
 using Corpetur.Api.Dtos;
 using Corpetur.Api.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Corpetur.Api.Controllers;
 
+// Gestión de usuarios: solo ADMIN. (El login y el cambio de la propia contraseña
+// viven en AuthController y no requieren rol.)
+[Authorize(Roles = "ADMIN")]
 [ApiController]
 [Route("api/[controller]")]
 public class UsuariosController : ControllerBase
 {
     private readonly CorpeturDbContext _db;
-    public UsuariosController(CorpeturDbContext db) => _db = db;
+    private readonly IPasswordHasher<Usuario> _hasher;
+    public UsuariosController(CorpeturDbContext db, IPasswordHasher<Usuario> hasher)
+    {
+        _db = db; _hasher = hasher;
+    }
 
     private static readonly string[] Roles = { "ADMIN", "CONTABILIDAD", "CAPTURA", "LECTURA" };
 
@@ -41,8 +50,12 @@ public class UsuariosController : ControllerBase
             return BadRequest("Rol debe ser 'ADMIN', 'CONTABILIDAD', 'CAPTURA' o 'LECTURA'.");
         if (await _db.Usuarios.AnyAsync(x => x.Email == dto.Email))
             return Conflict($"Ya existe un usuario con email '{dto.Email}'.");
+        if (!string.IsNullOrEmpty(dto.Password) && dto.Password.Length < 8)
+            return BadRequest("La contraseña debe tener al menos 8 caracteres.");
 
         var u = new Usuario { Nombre = dto.Nombre, Email = dto.Email, Rol = dto.Rol };
+        if (!string.IsNullOrEmpty(dto.Password))
+            u.PasswordHash = _hasher.HashPassword(u, dto.Password);
         _db.Usuarios.Add(u);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = u.UsuarioId },
@@ -60,6 +73,19 @@ public class UsuariosController : ControllerBase
             return Conflict($"Ya existe otro usuario con email '{dto.Email}'.");
 
         u.Nombre = dto.Nombre; u.Email = dto.Email; u.Rol = dto.Rol;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // Un ADMIN restablece la contraseña de cualquier usuario.
+    [HttpPost("{id:int}/reset-password")]
+    public async Task<IActionResult> ResetPassword(int id, ResetPasswordRequest dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.PasswordNueva) || dto.PasswordNueva.Length < 8)
+            return BadRequest("La contraseña debe tener al menos 8 caracteres.");
+        var u = await _db.Usuarios.FindAsync(id);
+        if (u is null) return NotFound();
+        u.PasswordHash = _hasher.HashPassword(u, dto.PasswordNueva);
         await _db.SaveChangesAsync();
         return NoContent();
     }

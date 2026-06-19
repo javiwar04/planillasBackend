@@ -1,8 +1,5 @@
 namespace Corpetur.Api.Dtos;
 
-// DTOs simples para no exponer las entidades directamente (evita over-posting
-// y referencias circulares al serializar).
-
 public record EstablecimientoDto(int EstablecimientoId, string Codigo, string Nombre, bool EsEntidadContable, bool Activo);
 public record EstablecimientoCreateDto(string Codigo, string Nombre, bool EsEntidadContable);
 
@@ -97,7 +94,15 @@ public record ProvisionLaboralCreateDto(int EmpleadoId, int Anio, byte Mes, deci
 
 // --- Usuarios ---
 public record UsuarioDto(int UsuarioId, string Nombre, string Email, string Rol, bool Activo);
-public record UsuarioCreateDto(string Nombre, string Email, string Rol);
+// La contraseña es opcional al crear: si viene, se guarda hasheada; si no, el usuario
+// queda sin acceso hasta que un ADMIN le asigne una.
+public record UsuarioCreateDto(string Nombre, string Email, string Rol, string? Password);
+
+// --- Autenticación ---
+public record LoginRequest(string Email, string Password);
+public record LoginResponse(string Token, DateTime ExpiraEn, UsuarioDto Usuario);
+public record CambiarPasswordRequest(string PasswordActual, string PasswordNueva);
+public record ResetPasswordRequest(string PasswordNueva);
 
 // ============================================================================
 // BLOQUE 3 — Boletas, motor de cálculo y reparto de comisión

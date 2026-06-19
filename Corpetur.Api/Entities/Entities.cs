@@ -223,4 +223,6 @@ public class Usuario
     [MaxLength(150)] public string Email { get; set; } = null!;
     [MaxLength(20)] public string Rol { get; set; } = "CAPTURA";
     public bool Activo { get; set; } = true;
+    // Hash PBKDF2 de la contraseña (nunca texto plano). NULL = usuario sin acceso aún.
+    [MaxLength(255)] public string? PasswordHash { get; set; }
 }
