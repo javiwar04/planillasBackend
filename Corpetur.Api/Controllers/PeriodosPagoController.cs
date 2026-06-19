@@ -1,6 +1,7 @@
 using Corpetur.Api.Data;
 using Corpetur.Api.Dtos;
 using Corpetur.Api.Entities;
+using Corpetur.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,12 @@ namespace Corpetur.Api.Controllers;
 public class PeriodosPagoController : ControllerBase
 {
     private readonly CorpeturDbContext _db;
-    public PeriodosPagoController(CorpeturDbContext db) => _db = db;
+    private readonly NominaService _nomina;
+    public PeriodosPagoController(CorpeturDbContext db, NominaService nomina)
+    {
+        _db = db;
+        _nomina = nomina;
+    }
 
     // GET /api/periodospago?anio=2026&tipo=QUINCENA&estado=ABIERTO
     [HttpGet]
@@ -93,6 +99,30 @@ public class PeriodosPagoController : ControllerBase
             return Conflict("No se puede borrar: el período ya tiene boletas.");
         _db.PeriodosPago.Remove(p);
         await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // ========================================================================
+    //  Operaciones de nómina (bloque 3) — delegan en NominaService.
+    // ========================================================================
+
+    // POST /api/periodospago/{id}/generar
+    // QUINCENA: anticipo fijo por empleado (con overrides). FIN_MES: sueldo + IGSS
+    // + descuento del anticipo realmente pagado en las quincenas del mes.
+    [HttpPost("{id:int}/generar")]
+    public async Task<ActionResult<GenerarResultadoDto>> Generar(int id, [FromBody] GenerarPeriodoRequest? req = null)
+        => Ok(await _nomina.GenerarAsync(id, req));
+
+    // POST /api/periodospago/{id}/provisiones — genera el cuadro Kurt del mes del período.
+    [HttpPost("{id:int}/provisiones")]
+    public async Task<ActionResult<ProvisionesResultadoDto>> Provisiones(int id)
+        => Ok(await _nomina.GenerarProvisionesAsync(id));
+
+    // POST /api/periodospago/{id}/cerrar — marca boletas PAGADA y el período CERRADO (inmutable).
+    [HttpPost("{id:int}/cerrar")]
+    public async Task<IActionResult> Cerrar(int id)
+    {
+        await _nomina.CerrarAsync(id);
         return NoContent();
     }
 }

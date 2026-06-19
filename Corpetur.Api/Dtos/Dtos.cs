@@ -98,3 +98,44 @@ public record ProvisionLaboralCreateDto(int EmpleadoId, int Anio, byte Mes, deci
 // --- Usuarios ---
 public record UsuarioDto(int UsuarioId, string Nombre, string Email, string Rol, bool Activo);
 public record UsuarioCreateDto(string Nombre, string Email, string Rol);
+
+// ============================================================================
+// BLOQUE 3 — Boletas, motor de cálculo y reparto de comisión
+// ============================================================================
+
+// --- Boletas ---
+public record BoletaDetalleDto(int BoletaDetalleId, int ConceptoId, string ConceptoCodigo,
+    string ConceptoNombre, string Naturaleza, decimal Monto, string? Descripcion,
+    bool EsCalculado, int? PrestamoMovimientoId);
+
+public record BoletaListDto(int BoletaId, int EmpleadoId, string EmpleadoNombre,
+    int PeriodoPagoId, string Estado, decimal TotalIngresos, decimal TotalEgresos, decimal Liquido);
+
+public record BoletaDto(int BoletaId, int EmpleadoId, string EmpleadoNombre, int PeriodoPagoId,
+    string Estado, decimal TotalIngresos, decimal TotalEgresos, decimal Liquido,
+    string? Observaciones, IEnumerable<BoletaDetalleDto> Detalles);
+
+// Alta/edición de una línea manual de la boleta (comisión, ISR, bonificación, descuento...).
+public record BoletaLineaCreateDto(int ConceptoId, decimal Monto, string? Descripcion);
+
+// --- Generación de período ---
+public record QuincenaOverrideDto(int EmpleadoId, decimal Monto);
+public record GenerarPeriodoRequest(List<QuincenaOverrideDto>? OverridesQuincena);
+public record GenerarResultadoDto(int PeriodoPagoId, string Tipo, string Estado,
+    int BoletasCreadas, int BoletasActualizadas, int EmpleadosPlanilla);
+
+public record ProvisionesResultadoDto(int Anio, int Mes, int Generadas, int Actualizadas);
+
+// --- Reparto de comisión por establecimiento ---
+public record RepartoItemDto(int EmpleadoId, decimal? Peso);
+public record RepartoComisionRequest(
+    int PeriodoPagoId,
+    int EstablecimientoId,
+    decimal MontoTotal,
+    string Modo,                 // IGUAL | PESO
+    int? ConceptoId,             // default: concepto COMISION
+    string? Descripcion,
+    List<RepartoItemDto>? Empleados);   // null = todos los de planilla activos del establecimiento
+public record RepartoResultadoItemDto(int EmpleadoId, string EmpleadoNombre, decimal Monto);
+public record RepartoResultadoDto(decimal MontoTotal, decimal MontoRepartido, int Empleados,
+    IEnumerable<RepartoResultadoItemDto> Detalle);
