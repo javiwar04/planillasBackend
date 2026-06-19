@@ -1,0 +1,29 @@
+# ---- .NET / build ----
+bin/
+obj/
+out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ---- IDE / editores ----
+.vs/
+.vscode/
+.idea/
+*.swp
+
+# ---- Claude Code (config local) ----
+.claude/
+
+# ---- secretos / config local ----
+# La cadena de conexión local va en appsettings.json (autenticación de Windows,
+# sin secretos). Si algún día se usa user/password, ponerlos en estos archivos:
+appsettings.Development.local.json
+appsettings.local.json
+secrets.json
+
+# ---- varios ----
+*.log
+[Tt]humbs.db
+.DS_Store
