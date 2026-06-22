@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { IconPlus } from "@/components/icons";
 
 type Valor = string | number | boolean | null;
@@ -41,6 +42,7 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
   const { titulo, descripcion, endpoint, idKey, query = "", columnas, campos, vacio, toForm,
     deleteLabel = "Borrar", textoNuevo = "Nuevo" } = props;
 
+  const toast = useToast();
   const [items, setItems] = useState<T[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +98,7 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
       if (editId !== null) await api(`${endpoint}/${editId}`, { method: "PUT", body });
       else await api(endpoint, { method: "POST", body });
       setModal(false);
+      toast.success(editId !== null ? "Cambios guardados." : "Registro creado.");
       await cargar();
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "No se pudo guardar.");
@@ -108,9 +111,10 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
     if (!confirm(`¿${deleteLabel} este registro?`)) return;
     try {
       await api(`${endpoint}/${item[idKey]}`, { method: "DELETE" });
+      toast.success("Registro actualizado.");
       await cargar();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo completar.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo completar.");
     }
   }
 

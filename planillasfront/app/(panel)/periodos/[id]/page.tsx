@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
+import { useToast } from "@/lib/toast";
 import { IconCash } from "@/components/icons";
 import type {
   Periodo, BoletaLista, Boleta, Concepto, Establecimiento, Empleado, RepartoResultado,
@@ -260,6 +261,7 @@ function BoletaModal({
   onClose: () => void;
   onChange: () => Promise<void>;
 }) {
+  const toast = useToast();
   const editable = !cerrado && boleta.estado !== "PAGADA";
   const [conceptoId, setConceptoId] = useState(0);
   const [monto, setMonto] = useState("");
@@ -290,9 +292,10 @@ function BoletaModal({
     if (!confirm("¿Eliminar esta línea?")) return;
     try {
       await api(`/boletas/${boleta.boletaId}/lineas/${detalleId}`, { method: "DELETE" });
+      toast.success("Línea eliminada.");
       await onChange();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo eliminar.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo eliminar.");
     }
   }
 

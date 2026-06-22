@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/lib/toast";
 import { IconPlus } from "@/components/icons";
 import type { Usuario, UsuarioCreate, Rol } from "@/lib/types";
 
@@ -17,10 +18,10 @@ const VACIO: UsuarioCreate = { nombre: "", email: "", rol: "CAPTURA", password: 
 
 export default function UsuariosPage() {
   const { usuario: actual } = useAuth();
+  const toast = useToast();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
 
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -84,7 +85,7 @@ export default function UsuariosPage() {
         });
       }
       setModal(false);
-      setAviso(editId ? "Usuario actualizado." : "Usuario creado.");
+      toast.success(editId ? "Usuario actualizado." : "Usuario creado.");
       await cargar();
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "No se pudo guardar.");
@@ -103,20 +104,21 @@ export default function UsuariosPage() {
       });
       setResetId(null);
       setResetPass("");
-      setAviso("Contraseña restablecida.");
+      toast.success("Contraseña restablecida.");
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo restablecer.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo restablecer.");
     }
   }
 
   async function desactivar(u: Usuario) {
-    if (u.usuarioId === actual?.usuarioId) { alert("No puedes desactivar tu propia cuenta."); return; }
+    if (u.usuarioId === actual?.usuarioId) { toast.error("No puedes desactivar tu propia cuenta."); return; }
     if (!confirm(`¿Desactivar a ${u.nombre}? No podrá iniciar sesión.`)) return;
     try {
       await api(`/usuarios/${u.usuarioId}`, { method: "DELETE" });
+      toast.success("Usuario desactivado.");
       await cargar();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo desactivar.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo desactivar.");
     }
   }
 
@@ -132,7 +134,6 @@ export default function UsuariosPage() {
         </button>
       </div>
 
-      {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="card overflow-hidden">

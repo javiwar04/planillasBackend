@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
 import type { Empleado, EmpleadoCreate, Establecimiento, Departamento } from "@/lib/types";
@@ -17,6 +18,7 @@ export default function EmpleadosPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [establecimientos, setEstablecimientos] = useState<Establecimiento[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
+  const toast = useToast();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
@@ -86,6 +88,7 @@ export default function EmpleadosPage() {
       if (editId) await api(`/empleados/${editId}`, { method: "PUT", body: payload });
       else await api("/empleados", { method: "POST", body: payload });
       setModal(false);
+      toast.success(editId ? "Colaborador actualizado." : "Colaborador creado.");
       await cargar();
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "No se pudo guardar.");
@@ -98,9 +101,10 @@ export default function EmpleadosPage() {
     if (!confirm(`¿Dar de baja a ${e.nombres} ${e.apellidos}? Se conserva en el histórico.`)) return;
     try {
       await api(`/empleados/${e.empleadoId}`, { method: "DELETE" });
+      toast.success("Colaborador dado de baja.");
       await cargar();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo dar de baja.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo dar de baja.");
     }
   }
 
