@@ -50,3 +50,21 @@ export const IconPercent = (p: P) => (
 export const IconWallet = (p: P) => (
   <svg {...base(p)}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M16 14h2" /></svg>
 );
+export const IconLayers = (p: P) => (
+  <svg {...base(p)}><path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="m3 13 9 5 9-5M3 16.5 12 21l9-4.5" /></svg>
+);
+export const IconBriefcase = (p: P) => (
+  <svg {...base(p)}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" /></svg>
+);
+export const IconTag = (p: P) => (
+  <svg {...base(p)}><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z" /><circle cx="7.5" cy="7.5" r="1.3" /></svg>
+);
+export const IconSliders = (p: P) => (
+  <svg {...base(p)}><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4" /><circle cx="16" cy="6" r="2" /><circle cx="8" cy="12" r="2" /><circle cx="14" cy="18" r="2" /></svg>
+);
+export const IconChevron = (p: P) => (
+  <svg {...base(p)}><path d="m6 9 6 6 6-6" /></svg>
+);
+export const IconMetric = (p: P) => (
+  <svg {...base(p)}><path d="M3 3v18h18" /><path d="m7 14 3-4 3 2 4-6" /></svg>
+);
