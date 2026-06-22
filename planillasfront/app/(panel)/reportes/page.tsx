@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
+import { exportarExcel } from "@/lib/excel";
 import type { Empleado, BoletaLista, Periodo, ProvisionLaboral } from "@/lib/types";
 
 type Tab = "historico" | "pasivo";
@@ -88,16 +89,37 @@ function Historico() {
 
   const totalLiquido = boletas.reduce((s, b) => s + b.liquido, 0);
 
+  function exportar() {
+    const emp = empleados.find((e) => e.empleadoId === empleadoId);
+    const filas = filas2Export();
+    exportarExcel(`historico_${emp?.apellidos ?? empleadoId}`, filas, "Histórico");
+  }
+  function filas2Export() {
+    return filas.map(({ b, p }) => ({
+      Período: p ? `${mesNombre(p.mes)} ${p.anio}` : "",
+      Tipo: p ? (p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes") : "",
+      Estado: b.estado,
+      Ingresos: b.totalIngresos,
+      Egresos: b.totalEgresos,
+      Líquido: b.liquido,
+    }));
+  }
+
   return (
     <div className="space-y-4">
-      <select className="input max-w-sm" value={empleadoId} onChange={(e) => cargarBoletas(Number(e.target.value))}>
-        <option value={0}>Seleccione un empleado…</option>
-        {empleados.map((e) => (
-          <option key={e.empleadoId} value={e.empleadoId}>
-            {e.apellidos}, {e.nombres}{!e.activo ? " (baja)" : ""}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-wrap items-center gap-3">
+        <select className="input max-w-sm" value={empleadoId} onChange={(e) => cargarBoletas(Number(e.target.value))}>
+          <option value={0}>Seleccione un empleado…</option>
+          {empleados.map((e) => (
+            <option key={e.empleadoId} value={e.empleadoId}>
+              {e.apellidos}, {e.nombres}{!e.activo ? " (baja)" : ""}
+            </option>
+          ))}
+        </select>
+        {empleadoId > 0 && filas.length > 0 && (
+          <button onClick={exportar} className="btn-ghost btn-sm">Exportar Excel</button>
+        )}
+      </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
@@ -185,6 +207,23 @@ function Pasivo() {
     { indem: 0, bono: 0, agui: 0, vac: 0, igss: 0, inte: 0, total: 0 }
   );
 
+  function exportar() {
+    const datos = filas.map((p) => ({
+      Empleado: p.empleadoNombre ?? "",
+      Mes: mesNombre(p.mes),
+      Año: p.anio,
+      Base: p.baseCalculo,
+      Indemnización: p.indemnizacion,
+      "Bono 14": p.bono14,
+      Aguinaldo: p.aguinaldo,
+      Vacaciones: p.vacaciones,
+      "IGSS patronal": p.igssPatronal,
+      INTECAP: p.intecap,
+      Total: totalFila(p),
+    }));
+    exportarExcel(`pasivo_laboral_${anio}${mes ? "_" + mes : ""}`, datos, "Pasivo laboral");
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
@@ -201,6 +240,9 @@ function Pasivo() {
             ))}
           </select>
         </label>
+        {filas.length > 0 && (
+          <button onClick={exportar} className="btn-ghost btn-sm">Exportar Excel</button>
+        )}
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

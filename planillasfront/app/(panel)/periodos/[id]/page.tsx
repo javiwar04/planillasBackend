@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
+import { exportarExcel } from "@/lib/excel";
 import { IconCash } from "@/components/icons";
 import type {
   Periodo, BoletaLista, Boleta, Concepto, Establecimiento, Empleado, RepartoResultado,
@@ -83,6 +84,19 @@ export default function PeriodoDetallePage() {
 
   useEffect(() => { setPagina(1); }, [filtroEstab, busqueda]);
 
+  function exportar() {
+    const filas = boletasFiltradas.map((b) => ({
+      Colaborador: b.empleadoNombre,
+      Establecimiento: empMap.get(b.empleadoId)?.establecimientoNombre ?? "",
+      Ingresos: b.totalIngresos,
+      Egresos: b.totalEgresos,
+      Líquido: b.liquido,
+      Estado: b.estado,
+    }));
+    const etq = periodo ? `${periodo.tipo}_${periodo.mes}_${periodo.anio}` : periodoId;
+    exportarExcel(`planilla_${etq}`, filas, "Planilla");
+  }
+
   async function abrirBoleta(id: number) {
     try {
       setBoletaSel(await api<Boleta>(`/boletas/${id}`));
@@ -136,6 +150,9 @@ export default function PeriodoDetallePage() {
           ))}
         </select>
         <span className="text-sm text-slate-500">{boletasFiltradas.length} boletas</span>
+        <button onClick={exportar} disabled={boletasFiltradas.length === 0} className="btn-ghost btn-sm ml-auto">
+          Exportar Excel
+        </button>
       </div>
 
       <div className="card overflow-hidden">
