@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -18,6 +18,7 @@ export default function PeriodoDetallePage() {
   const [boletas, setBoletas] = useState<BoletaLista[]>([]);
   const [establecimientos, setEstablecimientos] = useState<Establecimiento[]>([]);
   const [conceptos, setConceptos] = useState<Concepto[]>([]);
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -25,20 +26,28 @@ export default function PeriodoDetallePage() {
   const [boletaSel, setBoletaSel] = useState<Boleta | null>(null);
   const [repartoOpen, setRepartoOpen] = useState(false);
 
+  // Filtros y paginación
+  const [filtroEstab, setFiltroEstab] = useState(0);
+  const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const porPagina = 15;
+
   const cargar = useCallback(async () => {
     setCargando(true);
     setError(null);
     try {
-      const [per, bol, est, con] = await Promise.all([
+      const [per, bol, est, con, emp] = await Promise.all([
         api<Periodo>(`/periodospago/${periodoId}`),
         api<BoletaLista[]>(`/boletas?periodoId=${periodoId}`),
         api<Establecimiento[]>("/establecimientos"),
         api<Concepto[]>("/conceptos"),
+        api<Empleado[]>("/empleados?soloActivos=false"),
       ]);
       setPeriodo(per);
       setBoletas(bol);
       setEstablecimientos(est);
       setConceptos(con);
+      setEmpleados(emp);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar el período.");
     } finally {
@@ -52,6 +61,27 @@ export default function PeriodoDetallePage() {
   const totalLiquido = boletas.reduce((s, b) => s + b.liquido, 0);
   const totalIngresos = boletas.reduce((s, b) => s + b.totalIngresos, 0);
   const totalEgresos = boletas.reduce((s, b) => s + b.totalEgresos, 0);
+
+  // Mapa empleadoId -> establecimiento (la boleta no lo trae).
+  const empMap = useMemo(
+    () => new Map(empleados.map((e) => [e.empleadoId, e])),
+    [empleados]
+  );
+
+  const boletasFiltradas = useMemo(() => {
+    return boletas.filter((b) => {
+      const emp = empMap.get(b.empleadoId);
+      if (filtroEstab && emp?.establecimientoId !== filtroEstab) return false;
+      if (busqueda && !b.empleadoNombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
+      return true;
+    });
+  }, [boletas, empMap, filtroEstab, busqueda]);
+
+  const totalPaginas = Math.max(1, Math.ceil(boletasFiltradas.length / porPagina));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const visibles = boletasFiltradas.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
+
+  useEffect(() => { setPagina(1); }, [filtroEstab, busqueda]);
 
   async function abrirBoleta(id: number) {
     try {
@@ -95,12 +125,26 @@ export default function PeriodoDetallePage() {
         <Resumen titulo="Líquido a pagar" valor={money(totalLiquido)} destacado />
       </div>
 
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input className="input max-w-xs" placeholder="Buscar colaborador…"
+          value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        <select className="input max-w-xs" value={filtroEstab} onChange={(e) => setFiltroEstab(Number(e.target.value))}>
+          <option value={0}>Todos los establecimientos</option>
+          {establecimientos.map((es) => (
+            <option key={es.establecimientoId} value={es.establecimientoId}>{es.nombre}</option>
+          ))}
+        </select>
+        <span className="text-sm text-slate-500">{boletasFiltradas.length} boletas</span>
+      </div>
+
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="th">Empleado</th>
+                <th className="th">Colaborador</th>
+                <th className="th">Establecimiento</th>
                 <th className="th text-right">Ingresos</th>
                 <th className="th text-right">Egresos</th>
                 <th className="th text-right">Líquido</th>
@@ -110,15 +154,18 @@ export default function PeriodoDetallePage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <tr><td colSpan={6} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
+                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
               ) : boletas.length === 0 ? (
-                <tr><td colSpan={6} className="td py-10 text-center text-slate-400">
+                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">
                   Sin boletas. Usa “Generar” en la lista de períodos.
                 </td></tr>
+              ) : visibles.length === 0 ? (
+                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Sin coincidencias.</td></tr>
               ) : (
-                boletas.map((b) => (
+                visibles.map((b) => (
                   <tr key={b.boletaId} className="hover:bg-slate-50">
                     <td className="td font-medium text-slate-900">{b.empleadoNombre}</td>
+                    <td className="td text-slate-600">{empMap.get(b.empleadoId)?.establecimientoNombre ?? "—"}</td>
                     <td className="td text-right">{money(b.totalIngresos)}</td>
                     <td className="td text-right">{money(b.totalEgresos)}</td>
                     <td className="td text-right font-semibold">{money(b.liquido)}</td>
@@ -134,6 +181,24 @@ export default function PeriodoDetallePage() {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {boletasFiltradas.length > porPagina && (
+          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm">
+            <span className="text-slate-500">
+              {(paginaActual - 1) * porPagina + 1}–{Math.min(paginaActual * porPagina, boletasFiltradas.length)} de {boletasFiltradas.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button className="btn-ghost btn-sm" disabled={paginaActual <= 1} onClick={() => setPagina(paginaActual - 1)}>
+                Anterior
+              </button>
+              <span className="px-2 text-slate-600">{paginaActual} / {totalPaginas}</span>
+              <button className="btn-ghost btn-sm" disabled={paginaActual >= totalPaginas} onClick={() => setPagina(paginaActual + 1)}>
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {boletaSel && (
