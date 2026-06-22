@@ -77,11 +77,19 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS para el frontend Next.js (subdominio configurable en appsettings).
+// CORS para el frontend Next.js. En producción se usa Cors:FrontendOrigin (subdominio);
+// en desarrollo se permite además el Next dev server local (puerto 3000).
 const string CorsPolicy = "frontend";
-var frontendOrigin = builder.Configuration["Cors:FrontendOrigin"] ?? "http://localhost:3000";
+var origenes = new List<string>();
+var origenConfig = builder.Configuration["Cors:FrontendOrigin"];
+if (!string.IsNullOrWhiteSpace(origenConfig)) origenes.Add(origenConfig);
+if (builder.Environment.IsDevelopment())
+{
+    origenes.Add("http://localhost:3000");
+    origenes.Add("https://localhost:3000");
+}
 builder.Services.AddCors(o => o.AddPolicy(CorsPolicy, p =>
-    p.WithOrigins(frontendOrigin).AllowAnyHeader().AllowAnyMethod()));
+    p.WithOrigins(origenes.ToArray()).AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 
