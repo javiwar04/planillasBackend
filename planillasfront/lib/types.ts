@@ -166,6 +166,29 @@ export interface Concepto {
   activo: boolean;
 }
 
+// --- Préstamos ---
+export interface Prestamo {
+  prestamoId: number;
+  empleadoId: number;
+  empleadoNombre?: string | null;
+  tipo: string;
+  montoOriginal: number;
+  cuotaSugerida?: number | null;
+  saldo: number;
+  fechaInicio: string;
+  estado: string;
+}
+
+export interface PrestamoMovimiento {
+  prestamoMovimientoId: number;
+  prestamoId: number;
+  periodoPagoId?: number | null;
+  fecha: string;
+  tipo: "DESEMBOLSO" | "ABONO" | "AJUSTE";
+  monto: number;
+  saldoResultante: number;
+}
+
 // --- Pasivo laboral (cuadro Kurt) ---
 export interface ProvisionLaboral {
   provisionLaboralId: number;

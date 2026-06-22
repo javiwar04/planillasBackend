@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Catalogo } from "@/components/Catalogo";
 import { api } from "@/lib/api";
 import { money } from "@/lib/format";
@@ -47,6 +48,7 @@ export default function PrestamosPage() {
         { label: "Monto", align: "right", render: (p) => money(p.montoOriginal) },
         { label: "Saldo", align: "right", render: (p) => <span className="font-semibold">{money(p.saldo)}</span> },
         { label: "Estado", render: (p) => <span className={`badge ${p.estado === "ACTIVO" ? "bg-brand-100 text-brand-800" : "bg-slate-100 text-slate-500"}`}>{p.estado}</span> },
+        { label: "", render: (p) => <Link href={`/prestamos/${p.prestamoId}`} className="font-medium text-brand-700 hover:underline">Movimientos</Link> },
       ]}
     />
   );
