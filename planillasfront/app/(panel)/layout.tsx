@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
-import { IconHome, IconUsers, IconCalendar, IconChart, IconLogout } from "@/components/icons";
+import { IconHome, IconUsers, IconCalendar, IconChart, IconLogout, IconShield } from "@/components/icons";
 
 const NAV = [
   { href: "/", label: "Inicio", icon: IconHome },
   { href: "/empleados", label: "Empleados", icon: IconUsers },
   { href: "/periodos", label: "Períodos y boletas", icon: IconCalendar },
   { href: "/reportes", label: "Reportes", icon: IconChart },
+  { href: "/usuarios", label: "Usuarios", icon: IconShield, soloAdmin: true },
 ];
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +49,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-2">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {NAV.filter((n) => !n.soloAdmin || usuario.rol === "ADMIN").map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}

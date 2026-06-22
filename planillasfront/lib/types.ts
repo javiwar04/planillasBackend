@@ -16,6 +16,13 @@ export interface LoginResponse {
   usuario: Usuario;
 }
 
+export interface UsuarioCreate {
+  nombre: string;
+  email: string;
+  rol: Rol;
+  password?: string | null;
+}
+
 export interface Establecimiento {
   establecimientoId: number;
   codigo: string;

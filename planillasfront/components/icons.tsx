@@ -38,3 +38,6 @@ export const IconPlus = (p: P) => (
 export const IconCash = (p: P) => (
   <svg {...base(p)}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 9v6M18 9v6" /></svg>
 );
+export const IconShield = (p: P) => (
+  <svg {...base(p)}><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" /><path d="m9 12 2 2 4-4" /></svg>
+);
