@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f1f5f9;
+  --foreground: #0f172a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+  /* Botones — cada variante es autocontenida (Tailwind v4 no permite @apply de clases propias) */
+  .btn-primary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
+           font-semibold text-white transition bg-brand-600 hover:bg-brand-700 focus:outline-none
+           focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300
+           bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50
+           focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-1
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
+           font-semibold text-white transition bg-red-600 hover:bg-red-700 focus:outline-none
+           focus:ring-2 focus:ring-red-400 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50;
+  }
+  /* Modificador de tamaño (se usa junto a una variante; va al final para ganar en cascada) */
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Tarjetas */
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  /* Formularios */
+  .label {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
+           outline-none transition placeholder:text-slate-400 focus:border-brand-500
+           focus:ring-2 focus:ring-brand-100;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* Tablas */
+  .th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .td {
+    @apply px-4 py-3 text-sm text-slate-700;
+  }
 }

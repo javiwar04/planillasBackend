@@ -4,10 +4,13 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { IconHome, IconUsers, IconCalendar, IconChart, IconLogout } from "@/components/icons";
 
 const NAV = [
-  { href: "/", label: "Inicio" },
-  { href: "/empleados", label: "Empleados" },
+  { href: "/", label: "Inicio", icon: IconHome },
+  { href: "/empleados", label: "Empleados", icon: IconUsers },
+  { href: "/periodos", label: "Períodos y boletas", icon: IconCalendar },
+  { href: "/reportes", label: "Reportes", icon: IconChart },
 ];
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +18,6 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
 
-  // Guard: sin sesión, al login.
   useEffect(() => {
     if (!cargando && !usuario) router.replace("/login");
   }, [cargando, usuario, router]);
@@ -28,44 +30,65 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  const activo = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-6">
-            <span className="font-bold text-slate-900">Nómina CORPETUR</span>
-            <nav className="flex gap-1">
-              {NAV.map((item) => {
-                const activo = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                      activo ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="hidden w-64 shrink-0 flex-col bg-slate-900 text-slate-300 md:flex">
+        <div className="flex items-center gap-2 px-6 py-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 font-bold text-white">
+            C
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-500">
-              {usuario.nombre} · <span className="font-medium text-slate-700">{usuario.rol}</span>
-            </span>
-            <button
-              onClick={logout}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 transition hover:bg-slate-100"
-            >
-              Salir
-            </button>
+          <div>
+            <div className="text-sm font-bold text-white">CORPETUR</div>
+            <div className="text-xs text-slate-400">Nómina</div>
           </div>
         </div>
-      </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
+        <nav className="flex-1 space-y-1 px-3 py-2">
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                activo(href)
+                  ? "bg-brand-600 text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="border-t border-slate-800 p-3">
+          <div className="mb-2 px-3 py-1 text-xs text-slate-400">
+            <div className="font-medium text-slate-200">{usuario.nombre}</div>
+            <div>{usuario.rol}</div>
+          </div>
+          <button
+            onClick={logout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
+          >
+            <IconLogout className="h-5 w-5" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* Contenido */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Topbar móvil */}
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+          <span className="font-bold text-slate-900">CORPETUR · Nómina</span>
+          <button onClick={logout} className="text-sm font-medium text-slate-600">Salir</button>
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</main>
+      </div>
     </div>
   );
 }
