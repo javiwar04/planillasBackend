@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { IconHome, IconUsers, IconCalendar, IconChart, IconLogout, IconShield } from "@/components/icons";
+import { Logo } from "@/components/Logo";
 
 const NAV = [
   { href: "/", label: "Inicio", icon: IconHome },
@@ -39,8 +40,8 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col bg-slate-900 text-slate-300 md:flex">
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">
-            C
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1.5">
+            <Logo className="h-full w-full text-brand-700" />
           </div>
           <div className="min-w-0">
             <div className="truncate text-sm font-bold leading-tight text-white">Corporación Petenera de Turismo</div>

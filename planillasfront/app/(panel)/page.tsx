@@ -130,8 +130,8 @@ export default function DashboardPage() {
 }
 
 const tonos: Record<string, string> = {
-  azul: "bg-blue-50 text-blue-600",
-  verde: "bg-brand-50 text-brand-600",
+  azul: "bg-brand-50 text-brand-600",
+  verde: "bg-emerald-50 text-emerald-600",
   ambar: "bg-amber-50 text-amber-600",
 };
 

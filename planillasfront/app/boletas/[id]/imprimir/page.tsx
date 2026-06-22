@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
+import { Logo } from "@/components/Logo";
 import type { Boleta, Empleado, Periodo } from "@/lib/types";
 
 const EMPRESA = "Corporación Petenera de Turismo, S.A.";
@@ -55,9 +56,12 @@ export default function BoletaImprimirPage() {
       <div className="mx-auto max-w-3xl bg-white p-10 shadow-sm print:max-w-none print:p-0 print:shadow-none">
         {/* Encabezado */}
         <div className="flex items-start justify-between border-b-2 border-slate-800 pb-4">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">{EMPRESA}</h1>
-            <p className="text-sm text-slate-600">{empleado.establecimientoNombre}</p>
+          <div className="flex items-center gap-3">
+            <Logo className="h-12 w-12 shrink-0 text-brand-700" />
+            <div>
+              <h1 className="text-lg font-bold text-slate-900">{EMPRESA}</h1>
+              <p className="text-sm text-slate-600">{empleado.establecimientoNombre}</p>
+            </div>
           </div>
           <div className="text-right">
             <div className="text-sm font-bold uppercase tracking-wide text-slate-900">Boleta de pago</div>

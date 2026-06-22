@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   const { login, usuario, cargando } = useAuth();
@@ -36,10 +37,13 @@ export default function LoginPage() {
       {/* Panel de marca */}
       <div className="relative hidden flex-col justify-between bg-slate-900 p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold">
-            C
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white p-2">
+            <Logo className="h-full w-full text-brand-700" />
           </div>
-          <span className="text-lg font-bold">CORPETUR</span>
+          <div className="leading-tight">
+            <div className="text-base font-bold">Hoteles de Petén</div>
+            <div className="text-xs text-slate-400">Corporación Petenera de Turismo</div>
+          </div>
         </div>
         <div>
           <h2 className="text-3xl font-bold leading-tight">
@@ -57,10 +61,10 @@ export default function LoginPage() {
       <div className="flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">
-              C
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center">
+              <Logo className="h-full w-full text-brand-700" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900">Nómina CORPETUR</h1>
+            <h1 className="text-xl font-bold text-slate-900">Hoteles de Petén</h1>
           </div>
 
           <h1 className="mb-1 text-2xl font-bold text-slate-900">Bienvenido</h1>

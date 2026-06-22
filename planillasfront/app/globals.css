@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
+/* Azul marino de la identidad "Hoteles de Petén". */
 @theme {
-  --color-brand-50: #ecfdf5;
-  --color-brand-100: #d1fae5;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
-  --color-brand-800: #065f46;
-  --color-brand-900: #064e3b;
+  --color-brand-50: #eef0f8;
+  --color-brand-100: #d6dbef;
+  --color-brand-500: #3a4490;
+  --color-brand-600: #2a3478;
+  --color-brand-700: #232a6a;
+  --color-brand-800: #1a1f50;
+  --color-brand-900: #121539;
 }
 
 :root {
