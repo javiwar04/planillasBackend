@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
@@ -114,9 +115,12 @@ export default function EmpleadosPage() {
           <h1 className="text-2xl font-bold text-slate-900">Empleados</h1>
           <p className="text-sm text-slate-500">{empleados.length} activos</p>
         </div>
-        <button onClick={abrirNuevo} className="btn-primary">
-          <IconPlus className="h-4 w-4" /> Nuevo empleado
-        </button>
+        <div className="flex gap-2">
+          <Link href="/empleados/importar" className="btn-ghost">Importar Excel</Link>
+          <button onClick={abrirNuevo} className="btn-primary">
+            <IconPlus className="h-4 w-4" /> Nuevo empleado
+          </button>
+        </div>
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
