@@ -159,6 +159,22 @@ export interface Concepto {
   activo: boolean;
 }
 
+// --- Pasivo laboral (cuadro Kurt) ---
+export interface ProvisionLaboral {
+  provisionLaboralId: number;
+  empleadoId: number;
+  empleadoNombre?: string | null;
+  anio: number;
+  mes: number;
+  baseCalculo: number;
+  indemnizacion: number;
+  bono14: number;
+  aguinaldo: number;
+  vacaciones: number;
+  igssPatronal: number;
+  intecap: number;
+}
+
 // --- Reparto de comisión ---
 export interface RepartoResultadoItem {
   empleadoId: number;
