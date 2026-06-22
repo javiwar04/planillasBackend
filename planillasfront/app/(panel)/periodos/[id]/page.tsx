@@ -222,7 +222,13 @@ function BoletaModal({
             <h2 className="text-lg font-bold text-slate-900">{boleta.empleadoNombre}</h2>
             <span className="badge bg-slate-100 text-slate-600">{boleta.estado}</span>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
+          <div className="flex items-center gap-3">
+            <a href={`/boletas/${boleta.boletaId}/imprimir`} target="_blank" rel="noopener noreferrer"
+              className="btn-ghost btn-sm">
+              Imprimir
+            </a>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
+          </div>
         </div>
 
         <table className="w-full">
