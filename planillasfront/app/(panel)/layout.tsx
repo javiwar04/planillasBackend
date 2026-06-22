@@ -38,13 +38,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col bg-slate-900 text-slate-300 md:flex">
-        <div className="flex items-center gap-2 px-6 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 font-bold text-white">
+        <div className="flex items-center gap-3 px-5 py-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">
             C
           </div>
-          <div>
-            <div className="text-sm font-bold text-white">CORPETUR</div>
-            <div className="text-xs text-slate-400">Nómina</div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-bold leading-tight text-white">Corporación Petenera de Turismo</div>
+            <div className="text-xs text-slate-400">Petén, Guatemala</div>
           </div>
         </div>
 
@@ -64,6 +64,11 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             </Link>
           ))}
         </nav>
+
+        <div className="mx-3 mb-3 rounded-xl bg-slate-800 p-3">
+          <div className="text-sm font-semibold text-white">¿Necesitas ayuda?</div>
+          <p className="mt-1 text-xs text-slate-400">Escríbele al equipo de Recursos Humanos.</p>
+        </div>
 
         <div className="border-t border-slate-800 p-3">
           <div className="mb-2 px-3 py-1 text-xs text-slate-400">
