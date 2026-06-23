@@ -16,6 +16,7 @@ import type {
 export default function PeriodoDetallePage() {
   const params = useParams<{ id: string }>();
   const periodoId = Number(params.id);
+  const toast = useToast();
 
   const [periodo, setPeriodo] = useState<Periodo | null>(null);
   const [boletas, setBoletas] = useState<BoletaLista[]>([]);
@@ -23,8 +24,6 @@ export default function PeriodoDetallePage() {
   const [conceptos, setConceptos] = useState<Concepto[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
 
   const [boletaSel, setBoletaSel] = useState<Boleta | null>(null);
   const [repartoOpen, setRepartoOpen] = useState(false);
@@ -37,7 +36,6 @@ export default function PeriodoDetallePage() {
 
   const cargar = useCallback(async () => {
     setCargando(true);
-    setError(null);
     try {
       const [per, bol, est, con, emp] = await Promise.all([
         api<Periodo>(`/periodospago/${periodoId}`),
@@ -52,7 +50,7 @@ export default function PeriodoDetallePage() {
       setConceptos(con);
       setEmpleados(emp);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo cargar el período.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo cargar el período.");
     } finally {
       setCargando(false);
     }
@@ -114,7 +112,7 @@ export default function PeriodoDetallePage() {
           Monto: b.liquido,
         };
       });
-    if (filas.length === 0) { setError("No hay pagos con líquido positivo para exportar."); return; }
+    if (filas.length === 0) { toast.error("No hay pagos con líquido positivo para exportar."); return; }
     exportarExcel(`pago_banco_${etiqueta()}`, filas, "Pago banco");
   }
 
@@ -122,7 +120,7 @@ export default function PeriodoDetallePage() {
     try {
       setBoletaSel(await api<Boleta>(`/boletas/${id}`));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo abrir la boleta.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo abrir la boleta.");
     }
   }
 
@@ -150,8 +148,6 @@ export default function PeriodoDetallePage() {
         </div>
       </div>
 
-      {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       {/* Resumen */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -258,7 +254,7 @@ export default function PeriodoDetallePage() {
           establecimientos={establecimientos}
           conceptos={conceptos}
           onClose={() => setRepartoOpen(false)}
-          onDone={async (msg) => { setRepartoOpen(false); setAviso(msg); await cargar(); }}
+          onDone={async (msg) => { setRepartoOpen(false); toast.success(msg); await cargar(); }}
         />
       )}
     </div>

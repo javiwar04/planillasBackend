@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { mesNombre, money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
 import { SkeletonRows } from "@/components/Skeleton";
@@ -24,10 +25,9 @@ const estadoBadge: Record<string, string> = {
 };
 
 export default function PeriodosPage() {
+  const toast = useToast();
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<number | null>(null);
 
   const [modal, setModal] = useState(false);
@@ -44,15 +44,14 @@ export default function PeriodosPage() {
 
   const cargar = useCallback(async () => {
     setCargando(true);
-    setError(null);
     try {
       setPeriodos(await api<Periodo[]>("/periodospago"));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudieron cargar los períodos.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudieron cargar los períodos.");
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -83,14 +82,13 @@ export default function PeriodosPage() {
       setEmpleadosGen(emps);
       setOverrides(Object.fromEntries(emps.map((e) => [e.empleadoId, String(e.montoQuincena)])));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudieron cargar los colaboradores.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudieron cargar los colaboradores.");
     }
   }
 
   async function confirmarGenerarQuincena() {
     if (!genPeriodo) return;
     setGenerando(true);
-    setError(null);
     try {
       // Solo se envían los que difieren del monto estándar de la persona.
       const overridesQuincena = empleadosGen
@@ -98,36 +96,34 @@ export default function PeriodosPage() {
         .map((e) => ({ empleadoId: e.empleadoId, monto: Number(overrides[e.empleadoId] || 0) }));
       const r = await api<GenerarResultado>(`/periodospago/${genPeriodo.periodoPagoId}/generar`,
         { method: "POST", body: { overridesQuincena } });
-      setAviso(`Quincena generada: ${r.boletasCreadas} nuevas, ${r.boletasActualizadas} actualizadas` +
+      toast.success(`Quincena generada: ${r.boletasCreadas} nuevas, ${r.boletasActualizadas} actualizadas` +
         (overridesQuincena.length ? ` (${overridesQuincena.length} con ajuste).` : "."));
       setGenPeriodo(null);
       await cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo generar la quincena.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo generar la quincena.");
     } finally {
       setGenerando(false);
     }
   }
 
   async function accion(p: Periodo, tipo: "generar" | "provisiones" | "cerrar") {
-    setAviso(null);
-    setError(null);
     if (tipo === "cerrar" && !confirm(`¿Cerrar el período ${p.tipo} ${mesNombre(p.mes)} ${p.anio}? Ya no se podrá editar.`)) return;
     setOcupado(p.periodoPagoId);
     try {
       if (tipo === "generar") {
         const r = await api<GenerarResultado>(`/periodospago/${p.periodoPagoId}/generar`, { method: "POST" });
-        setAviso(`Boletas generadas: ${r.boletasCreadas} nuevas, ${r.boletasActualizadas} actualizadas (${r.empleadosPlanilla} de planilla).`);
+        toast.success(`Boletas generadas: ${r.boletasCreadas} nuevas, ${r.boletasActualizadas} actualizadas (${r.empleadosPlanilla} de planilla).`);
       } else if (tipo === "provisiones") {
         const r = await api<ProvisionesResultado>(`/periodospago/${p.periodoPagoId}/provisiones`, { method: "POST" });
-        setAviso(`Provisiones del ${mesNombre(r.mes)} ${r.anio}: ${r.generadas} generadas, ${r.actualizadas} actualizadas.`);
+        toast.success(`Provisiones del ${mesNombre(r.mes)} ${r.anio}: ${r.generadas} generadas, ${r.actualizadas} actualizadas.`);
       } else {
         await api(`/periodospago/${p.periodoPagoId}/cerrar`, { method: "POST" });
-        setAviso(`Período ${p.tipo} ${mesNombre(p.mes)} ${p.anio} cerrado.`);
+        toast.success(`Período ${p.tipo} ${mesNombre(p.mes)} ${p.anio} cerrado.`);
       }
       await cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo completar la acción.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo completar la acción.");
     } finally {
       setOcupado(null);
     }
@@ -145,8 +141,6 @@ export default function PeriodosPage() {
         </button>
       </div>
 
-      {aviso && <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-800">{aviso}</p>}
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
