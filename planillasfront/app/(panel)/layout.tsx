@@ -23,6 +23,7 @@ const GRUPOS: Grupo[] = [
       { href: "/prestamos", label: "Préstamos", icon: IconCash },
       { href: "/vacaciones", label: "Vacaciones", icon: IconSun },
       { href: "/ausencias", label: "Ausencias", icon: IconMetric },
+      { href: "/aguinaldo", label: "Aguinaldo / Bono 14", icon: IconCash },
       { href: "/liquidacion", label: "Liquidación", icon: IconReceipt },
       { href: "/reportes", label: "Reportes", icon: IconChart },
     ],
