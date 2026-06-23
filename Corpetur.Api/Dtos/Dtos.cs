@@ -44,7 +44,8 @@ public record EmpleadoCreateDto(
     DateOnly? FechaIngreso);
 
 // --- Traslados / movimientos de empleado ---
-public record TrasladoRequest(DateOnly Fecha, int? EstablecimientoId, int? DepartamentoId, int? PuestoId, string? Motivo);
+public record TrasladoRequest(DateOnly Fecha, int? EstablecimientoId, int? DepartamentoId, int? PuestoId,
+    decimal? SueldoBase, string? Motivo);
 public record EmpleadoMovimientoDto(
     int EmpleadoMovimientoId, int EmpleadoId, DateOnly Fecha, string? Motivo,
     int? EstablecimientoAnteriorId, string? EstablecimientoAnterior,
@@ -52,7 +53,8 @@ public record EmpleadoMovimientoDto(
     int? DepartamentoAnteriorId, string? DepartamentoAnterior,
     int? DepartamentoNuevoId, string? DepartamentoNuevo,
     int? PuestoAnteriorId, string? PuestoAnterior,
-    int? PuestoNuevoId, string? PuestoNuevo);
+    int? PuestoNuevoId, string? PuestoNuevo,
+    decimal? SueldoAnterior, decimal? SueldoNuevo);
 
 // --- Catálogos simples ---
 public record DepartamentoDto(int DepartamentoId, string Nombre);

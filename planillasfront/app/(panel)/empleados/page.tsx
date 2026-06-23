@@ -34,7 +34,7 @@ export default function EmpleadosPage() {
 
   // Traslado
   const [trasladoEmp, setTrasladoEmp] = useState<Empleado | null>(null);
-  const [tForm, setTForm] = useState({ fecha: hoyISO, establecimientoId: 0, departamentoId: 0, puestoId: 0, motivo: "" });
+  const [tForm, setTForm] = useState({ fecha: hoyISO, establecimientoId: 0, departamentoId: 0, puestoId: 0, sueldoBase: 0, motivo: "" });
   const [historial, setHistorial] = useState<EmpleadoMovimiento[]>([]);
   const [tEnviando, setTEnviando] = useState(false);
 
@@ -110,7 +110,7 @@ export default function EmpleadosPage() {
 
   async function abrirTraslado(e: Empleado) {
     setTrasladoEmp(e);
-    setTForm({ fecha: hoyISO, establecimientoId: e.establecimientoId, departamentoId: e.departamentoId ?? 0, puestoId: e.puestoId ?? 0, motivo: "" });
+    setTForm({ fecha: hoyISO, establecimientoId: e.establecimientoId, departamentoId: e.departamentoId ?? 0, puestoId: e.puestoId ?? 0, sueldoBase: e.sueldoBase, motivo: "" });
     setHistorial([]);
     try {
       setHistorial(await api<EmpleadoMovimiento[]>(`/empleados/${e.empleadoId}/movimientos`));
@@ -129,6 +129,7 @@ export default function EmpleadosPage() {
           establecimientoId: tForm.establecimientoId || null,
           departamentoId: tForm.departamentoId || null,
           puestoId: tForm.puestoId || null,
+          sueldoBase: tForm.sueldoBase || null,
           motivo: tForm.motivo.trim() || null,
         },
       });
@@ -372,6 +373,10 @@ export default function EmpleadosPage() {
                     ))}
                   </select>
                 </Campo>
+                <Campo label="Sueldo base (si es ascenso)">
+                  <input type="number" step="0.01" min="0" className="input" value={tForm.sueldoBase}
+                    onChange={(e) => setTForm({ ...tForm, sueldoBase: Number(e.target.value) })} />
+                </Campo>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -394,6 +399,7 @@ export default function EmpleadosPage() {
                       {m.establecimientoNuevo && <div className="text-xs text-slate-500">Establecimiento: {m.establecimientoAnterior ?? "—"} → <b>{m.establecimientoNuevo}</b></div>}
                       {m.departamentoNuevo && <div className="text-xs text-slate-500">Departamento: {m.departamentoAnterior ?? "—"} → <b>{m.departamentoNuevo}</b></div>}
                       {m.puestoNuevo && <div className="text-xs text-slate-500">Puesto: {m.puestoAnterior ?? "—"} → <b>{m.puestoNuevo}</b></div>}
+                      {m.sueldoNuevo != null && <div className="text-xs text-slate-500">Sueldo: {money(m.sueldoAnterior ?? 0)} → <b>{money(m.sueldoNuevo)}</b></div>}
                     </li>
                   ))}
                 </ul>

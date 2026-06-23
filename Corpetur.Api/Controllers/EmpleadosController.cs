@@ -137,8 +137,11 @@ public class EmpleadosController : ControllerBase
         var cambiaEstab = dto.EstablecimientoId is not null && dto.EstablecimientoId != e.EstablecimientoId;
         var cambiaDepto = dto.DepartamentoId is not null && dto.DepartamentoId != e.DepartamentoId;
         var cambiaPuesto = dto.PuestoId is not null && dto.PuestoId != e.PuestoId;
-        if (!cambiaEstab && !cambiaDepto && !cambiaPuesto)
-            return BadRequest("Indica al menos un cambio (establecimiento, departamento o puesto).");
+        var cambiaSueldo = dto.SueldoBase is not null && dto.SueldoBase != e.SueldoBase;
+        if (cambiaSueldo && dto.SueldoBase < 0)
+            return BadRequest("El sueldo no puede ser negativo.");
+        if (!cambiaEstab && !cambiaDepto && !cambiaPuesto && !cambiaSueldo)
+            return BadRequest("Indica al menos un cambio (establecimiento, departamento, puesto o sueldo).");
 
         if (cambiaEstab && !await _db.Establecimientos.AnyAsync(x => x.EstablecimientoId == dto.EstablecimientoId))
             return BadRequest("El establecimiento destino no existe.");
@@ -156,12 +159,15 @@ public class EmpleadosController : ControllerBase
             DepartamentoNuevoId = cambiaDepto ? dto.DepartamentoId : null,
             PuestoAnteriorId = cambiaPuesto ? e.PuestoId : null,
             PuestoNuevoId = cambiaPuesto ? dto.PuestoId : null,
+            SueldoAnterior = cambiaSueldo ? e.SueldoBase : null,
+            SueldoNuevo = cambiaSueldo ? dto.SueldoBase : null,
         };
         _db.EmpleadoMovimientos.Add(mov);
 
         if (cambiaEstab) e.EstablecimientoId = dto.EstablecimientoId!.Value;
         if (cambiaDepto) e.DepartamentoId = dto.DepartamentoId;
         if (cambiaPuesto) e.PuestoId = dto.PuestoId;
+        if (cambiaSueldo) e.SueldoBase = dto.SueldoBase!.Value;
         e.ActualizadoEn = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -187,7 +193,8 @@ public class EmpleadosController : ControllerBase
             m.DepartamentoAnteriorId, N(depto, m.DepartamentoAnteriorId),
             m.DepartamentoNuevoId, N(depto, m.DepartamentoNuevoId),
             m.PuestoAnteriorId, N(pues, m.PuestoAnteriorId),
-            m.PuestoNuevoId, N(pues, m.PuestoNuevoId))).ToList());
+            m.PuestoNuevoId, N(pues, m.PuestoNuevoId),
+            m.SueldoAnterior, m.SueldoNuevo)).ToList());
     }
 
     private async Task<ActionResult<EmpleadoMovimientoDto>> MovimientoDto(int movId)

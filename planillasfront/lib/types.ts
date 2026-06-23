@@ -58,6 +58,8 @@ export interface EmpleadoMovimiento {
   puestoAnterior?: string | null;
   puestoNuevoId?: number | null;
   puestoNuevo?: string | null;
+  sueldoAnterior?: number | null;
+  sueldoNuevo?: number | null;
 }
 
 export type TipoEmpleado = "PLANILLA" | "EXTRA";

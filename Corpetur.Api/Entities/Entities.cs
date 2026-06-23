@@ -87,6 +87,10 @@ public class EmpleadoMovimiento
     public int? PuestoAnteriorId { get; set; }
     public int? PuestoNuevoId { get; set; }
 
+    // Un traslado puede traer ascenso (cambio de sueldo).
+    [Column(TypeName = "decimal(14,2)")] public decimal? SueldoAnterior { get; set; }
+    [Column(TypeName = "decimal(14,2)")] public decimal? SueldoNuevo { get; set; }
+
     public DateTime CreadoEn { get; set; }
 }
 

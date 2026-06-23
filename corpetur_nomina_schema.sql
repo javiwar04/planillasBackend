@@ -99,6 +99,8 @@ CREATE TABLE dbo.EmpleadoMovimiento (
     DepartamentoNuevoId       INT NULL,
     PuestoAnteriorId          INT NULL,
     PuestoNuevoId             INT NULL,
+    SueldoAnterior            DECIMAL(14,2) NULL,   -- el traslado puede ser ascenso
+    SueldoNuevo               DECIMAL(14,2) NULL,
     CreadoEn                  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 CREATE INDEX IX_EmpleadoMovimiento_Empleado ON dbo.EmpleadoMovimiento(EmpleadoId);
