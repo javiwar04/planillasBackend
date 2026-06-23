@@ -289,6 +289,25 @@ public class NominaService
     }
 
     // ========================================================================
+    //  REABRIR PERÍODO (corrección antes de pagar)
+    // ========================================================================
+    public async Task ReabrirAsync(int periodoId)
+    {
+        var periodo = await _db.PeriodosPago
+            .Include(p => p.Boletas)
+            .FirstOrDefaultAsync(p => p.PeriodoPagoId == periodoId)
+            ?? throw new KeyNotFoundException("Período no encontrado.");
+        if (periodo.Estado != "CERRADO")
+            throw new NominaException("Solo se puede reabrir un período CERRADO.", conflict: true);
+
+        foreach (var b in periodo.Boletas)
+            if (b.Estado == "PAGADA") b.Estado = "CALCULADA";
+        periodo.Estado = "CALCULADO";
+        periodo.FechaPago = null;
+        await _db.SaveChangesAsync();
+    }
+
+    // ========================================================================
     //  HELPERS COMPARTIDOS
     // ========================================================================
 

@@ -47,14 +47,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // Por defecto TODO requiere usuario autenticado; los endpoints públicos usan [AllowAnonymous].
+// Política "Captura": roles que pueden escribir (LECTURA queda solo de consulta).
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
+    options.AddPolicy("Captura", p => p.RequireRole("ADMIN", "CONTABILIDAD", "CAPTURA"));
 });
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(o => o.Conventions.Add(new PermisosEscrituraConvention()))
     // DateOnly/serialización JSON estándar; los enums-string ya son texto en BD.
     .AddJsonOptions(_ => { });
 

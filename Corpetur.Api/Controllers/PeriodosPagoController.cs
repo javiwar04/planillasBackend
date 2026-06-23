@@ -2,6 +2,7 @@ using Corpetur.Api.Data;
 using Corpetur.Api.Dtos;
 using Corpetur.Api.Entities;
 using Corpetur.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +45,7 @@ public class PeriodosPagoController : ControllerBase
             p.FechaInicio, p.FechaFin, p.FechaPago, p.Estado);
     }
 
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPost]
     public async Task<ActionResult<PeriodoPagoDto>> Create(PeriodoPagoCreateDto dto)
     {
@@ -69,6 +71,7 @@ public class PeriodosPagoController : ControllerBase
 
     // Edita fechas/estado del período. La generación de boletas y el cierre con
     // sus reglas viven en el motor de cálculo (bloque 3), no aquí.
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, PeriodoPagoCreateDto dto)
     {
@@ -88,6 +91,7 @@ public class PeriodosPagoController : ControllerBase
 
     // Solo se puede borrar un período ABIERTO y sin boletas (aún no es histórico).
     // Un período con boletas o ya CERRADO es histórico y no se borra.
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -109,20 +113,33 @@ public class PeriodosPagoController : ControllerBase
     // POST /api/periodospago/{id}/generar
     // QUINCENA: anticipo fijo por empleado (con overrides). FIN_MES: sueldo + IGSS
     // + descuento del anticipo realmente pagado en las quincenas del mes.
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPost("{id:int}/generar")]
     public async Task<ActionResult<GenerarResultadoDto>> Generar(int id, [FromBody] GenerarPeriodoRequest? req = null)
         => Ok(await _nomina.GenerarAsync(id, req));
 
     // POST /api/periodospago/{id}/provisiones — genera el cuadro Kurt del mes del período.
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPost("{id:int}/provisiones")]
     public async Task<ActionResult<ProvisionesResultadoDto>> Provisiones(int id)
         => Ok(await _nomina.GenerarProvisionesAsync(id));
 
     // POST /api/periodospago/{id}/cerrar — marca boletas PAGADA y el período CERRADO (inmutable).
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPost("{id:int}/cerrar")]
     public async Task<IActionResult> Cerrar(int id)
     {
         await _nomina.CerrarAsync(id);
+        return NoContent();
+    }
+
+    // POST /api/periodospago/{id}/reabrir — revierte un período CERRADO a CALCULADO
+    // para corregir antes de pagar (queda en auditoría).
+    [Authorize(Roles = "ADMIN,CONTABILIDAD")]
+    [HttpPost("{id:int}/reabrir")]
+    public async Task<IActionResult> Reabrir(int id)
+    {
+        await _nomina.ReabrirAsync(id);
         return NoContent();
     }
 }

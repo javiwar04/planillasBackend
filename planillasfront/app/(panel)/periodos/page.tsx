@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
+import { useAuth } from "@/lib/auth";
 import { mesNombre, money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
 import { SkeletonRows } from "@/components/Skeleton";
@@ -26,6 +27,8 @@ const estadoBadge: Record<string, string> = {
 
 export default function PeriodosPage() {
   const toast = useToast();
+  const { usuario } = useAuth();
+  const puedeOperar = usuario?.rol === "ADMIN" || usuario?.rol === "CONTABILIDAD";
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [ocupado, setOcupado] = useState<number | null>(null);
@@ -107,8 +110,9 @@ export default function PeriodosPage() {
     }
   }
 
-  async function accion(p: Periodo, tipo: "generar" | "provisiones" | "cerrar") {
+  async function accion(p: Periodo, tipo: "generar" | "provisiones" | "cerrar" | "reabrir") {
     if (tipo === "cerrar" && !confirm(`¿Cerrar el período ${p.tipo} ${mesNombre(p.mes)} ${p.anio}? Ya no se podrá editar.`)) return;
+    if (tipo === "reabrir" && !confirm(`¿Reabrir el período ${p.tipo} ${mesNombre(p.mes)} ${p.anio}? Las boletas volverán a CALCULADA para corregir.`)) return;
     setOcupado(p.periodoPagoId);
     try {
       if (tipo === "generar") {
@@ -117,6 +121,9 @@ export default function PeriodosPage() {
       } else if (tipo === "provisiones") {
         const r = await api<ProvisionesResultado>(`/periodospago/${p.periodoPagoId}/provisiones`, { method: "POST" });
         toast.success(`Provisiones del ${mesNombre(r.mes)} ${r.anio}: ${r.generadas} generadas, ${r.actualizadas} actualizadas.`);
+      } else if (tipo === "reabrir") {
+        await api(`/periodospago/${p.periodoPagoId}/reabrir`, { method: "POST" });
+        toast.success(`Período ${p.tipo} ${mesNombre(p.mes)} ${p.anio} reabierto.`);
       } else {
         await api(`/periodospago/${p.periodoPagoId}/cerrar`, { method: "POST" });
         toast.success(`Período ${p.tipo} ${mesNombre(p.mes)} ${p.anio} cerrado.`);
@@ -136,9 +143,11 @@ export default function PeriodosPage() {
           <h1 className="text-2xl font-bold text-slate-900">Períodos y boletas</h1>
           <p className="text-sm text-slate-500">Genera quincenas y fin de mes, provisiones y cierre.</p>
         </div>
-        <button onClick={() => { setForm(VACIO); setFormError(null); setModal(true); }} className="btn-primary">
-          <IconPlus className="h-4 w-4" /> Nuevo período
-        </button>
+        {puedeOperar && (
+          <button onClick={() => { setForm(VACIO); setFormError(null); setModal(true); }} className="btn-primary">
+            <IconPlus className="h-4 w-4" /> Nuevo período
+          </button>
+        )}
       </div>
 
 
@@ -177,7 +186,7 @@ export default function PeriodosPage() {
                       <td className="td">
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           <Link href={`/periodos/${p.periodoPagoId}`} className="btn-ghost btn-sm">Ver boletas</Link>
-                          {p.estado !== "CERRADO" && (
+                          {puedeOperar && p.estado !== "CERRADO" && (
                             <>
                               <button disabled={busy}
                                 onClick={() => p.tipo === "QUINCENA" ? abrirGenerarQuincena(p) : accion(p, "generar")}
@@ -193,6 +202,11 @@ export default function PeriodosPage() {
                                 Cerrar
                               </button>
                             </>
+                          )}
+                          {puedeOperar && p.estado === "CERRADO" && (
+                            <button disabled={busy} onClick={() => accion(p, "reabrir")} className="btn-ghost btn-sm">
+                              {busy ? "…" : "Reabrir"}
+                            </button>
                           )}
                         </div>
                       </td>

@@ -184,6 +184,43 @@ public class NominaServiceTests
         Assert.Equal(10000m, r.Detalle.Sum(d => d.Monto));
     }
 
+    // ---- Reabrir período: CERRADO -> CALCULADO y boletas PAGADA -> CALCULADA ----
+    [Fact]
+    public async Task Reabrir_revierteCierre()
+    {
+        using var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "ISLA", Nombre = "Isla" });
+        var emp = Empleado(1);
+        db.Empleados.Add(emp);
+        db.PeriodosPago.Add(new PeriodoPago { PeriodoPagoId = 1, Anio = 2026, Mes = 6, Tipo = "FIN_MES",
+            FechaInicio = new(2026, 6, 16), FechaFin = new(2026, 6, 30), Estado = "CERRADO",
+            FechaPago = new(2026, 6, 30) });
+        db.SaveChanges();
+        db.Boletas.Add(new Boleta { EmpleadoId = emp.EmpleadoId, PeriodoPagoId = 1, Estado = "PAGADA" });
+        db.SaveChanges();
+
+        var svc = new NominaService(db);
+        await svc.ReabrirAsync(1);
+
+        var per = await db.PeriodosPago.FindAsync(1);
+        Assert.Equal("CALCULADO", per!.Estado);
+        Assert.Null(per.FechaPago);
+        Assert.All(await db.Boletas.Where(b => b.PeriodoPagoId == 1).ToListAsync(),
+            b => Assert.Equal("CALCULADA", b.Estado));
+    }
+
+    [Fact]
+    public async Task Reabrir_periodoNoCerrado_lanzaConflicto()
+    {
+        using var db = NuevoContexto();
+        db.PeriodosPago.Add(new PeriodoPago { PeriodoPagoId = 1, Anio = 2026, Mes = 6, Tipo = "FIN_MES",
+            FechaInicio = new(2026, 6, 16), FechaFin = new(2026, 6, 30), Estado = "CALCULADO" });
+        db.SaveChanges();
+        var svc = new NominaService(db);
+        var ex = await Assert.ThrowsAsync<NominaException>(() => svc.ReabrirAsync(1));
+        Assert.True(ex.Conflict);
+    }
+
     // ---- No se puede repartir en un período cerrado ----
     [Fact]
     public async Task Reparto_enPeriodoCerrado_lanzaConflicto()

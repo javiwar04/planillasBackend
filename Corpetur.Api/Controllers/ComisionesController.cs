@@ -1,9 +1,11 @@
 using Corpetur.Api.Dtos;
 using Corpetur.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Corpetur.Api.Controllers;
 
+[Authorize(Roles = "ADMIN,CONTABILIDAD")]
 [ApiController]
 [Route("api/[controller]")]
 public class ComisionesController : ControllerBase
