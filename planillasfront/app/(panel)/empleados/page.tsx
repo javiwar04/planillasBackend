@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
+import { SkeletonRows } from "@/components/Skeleton";
 import type { Empleado, EmpleadoCreate, Establecimiento, Departamento, Puesto, EmpleadoMovimiento } from "@/lib/types";
 
 const hoyISO = new Date().toISOString().slice(0, 10);
@@ -198,7 +199,7 @@ export default function EmpleadosPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
+                <SkeletonRows cols={7} />
               ) : filtrados.length === 0 ? (
                 <tr><td colSpan={7} className="td py-10 text-center text-slate-400">
                   {empleados.length === 0 ? "Sin empleados todavía." : "Sin coincidencias."}

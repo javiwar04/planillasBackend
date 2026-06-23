@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { mesNombre, money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
+import { SkeletonRows } from "@/components/Skeleton";
 import type { Periodo, PeriodoCreate, GenerarResultado, ProvisionesResultado, Empleado } from "@/lib/types";
 
 const hoy = new Date();
@@ -161,7 +162,7 @@ export default function PeriodosPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <tr><td colSpan={5} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
+                <SkeletonRows cols={5} />
               ) : periodos.length === 0 ? (
                 <tr><td colSpan={5} className="td py-10 text-center text-slate-400">Sin períodos. Crea el primero.</td></tr>
               ) : (

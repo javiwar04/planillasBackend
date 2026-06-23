@@ -8,6 +8,7 @@ import { money, mesNombre } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
 import { useToast } from "@/lib/toast";
 import { IconCash } from "@/components/icons";
+import { SkeletonRows } from "@/components/Skeleton";
 import type {
   Periodo, BoletaLista, Boleta, Concepto, Establecimiento, Empleado, RepartoResultado,
 } from "@/lib/types";
@@ -194,7 +195,7 @@ export default function PeriodoDetallePage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
+                <SkeletonRows cols={7} />
               ) : boletas.length === 0 ? (
                 <tr><td colSpan={7} className="td py-10 text-center text-slate-400">
                   Sin boletas. Usa “Generar” en la lista de períodos.
