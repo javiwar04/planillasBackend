@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
+import { PlanillaIGSS, LibroSalarios } from "@/components/ReportesLegales";
 import type { Empleado, BoletaLista, Periodo, ProvisionLaboral } from "@/lib/types";
 
-type Tab = "historico" | "pasivo";
+type Tab = "historico" | "pasivo" | "igss" | "libro";
 
 export default function ReportesPage() {
   const [tab, setTab] = useState<Tab>("historico");
@@ -15,15 +16,20 @@ export default function ReportesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Reportes</h1>
-        <p className="text-sm text-slate-500">Histórico por persona y pasivo laboral (cuadro Kurt).</p>
+        <p className="text-sm text-slate-500">Histórico, pasivo laboral, planilla IGSS y libro de salarios.</p>
       </div>
 
-      <div className="flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
-        <TabBtn activo={tab === "historico"} onClick={() => setTab("historico")}>Histórico por empleado</TabBtn>
+      <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+        <TabBtn activo={tab === "historico"} onClick={() => setTab("historico")}>Histórico</TabBtn>
         <TabBtn activo={tab === "pasivo"} onClick={() => setTab("pasivo")}>Pasivo laboral</TabBtn>
+        <TabBtn activo={tab === "igss"} onClick={() => setTab("igss")}>Planilla IGSS</TabBtn>
+        <TabBtn activo={tab === "libro"} onClick={() => setTab("libro")}>Libro de salarios</TabBtn>
       </div>
 
-      {tab === "historico" ? <Historico /> : <Pasivo />}
+      {tab === "historico" && <Historico />}
+      {tab === "pasivo" && <Pasivo />}
+      {tab === "igss" && <PlanillaIGSS />}
+      {tab === "libro" && <LibroSalarios />}
     </div>
   );
 }
