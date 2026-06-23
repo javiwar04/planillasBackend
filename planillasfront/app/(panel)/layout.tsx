@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import {
   IconHome, IconUsers, IconCalendar, IconChart, IconLogout, IconShield,
-  IconBuilding, IconLayers, IconBriefcase, IconTag, IconSliders, IconCash, IconMetric, IconChevron,
+  IconBuilding, IconLayers, IconBriefcase, IconTag, IconSliders, IconCash, IconMetric, IconChevron, IconReceipt,
 } from "@/components/icons";
 import { Logo } from "@/components/Logo";
 
@@ -21,6 +21,7 @@ const GRUPOS: Grupo[] = [
       { href: "/empleados", label: "Colaboradores", icon: IconUsers },
       { href: "/periodos", label: "Períodos y boletas", icon: IconCalendar },
       { href: "/prestamos", label: "Préstamos", icon: IconCash },
+      { href: "/liquidacion", label: "Liquidación", icon: IconReceipt },
       { href: "/reportes", label: "Reportes", icon: IconChart },
     ],
   },
