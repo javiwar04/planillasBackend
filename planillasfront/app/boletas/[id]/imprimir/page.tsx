@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre } from "@/lib/format";
+import { numeroEnLetras } from "@/lib/numeroEnLetras";
 import { Logo } from "@/components/Logo";
 import type { Boleta, Empleado, Periodo } from "@/lib/types";
 
@@ -65,6 +66,7 @@ export default function BoletaImprimirPage() {
           </div>
           <div className="text-right">
             <div className="text-sm font-bold uppercase tracking-wide text-slate-900">Boleta de pago</div>
+            <div className="text-sm text-slate-600">No. {boleta.boletaId}</div>
             <div className="text-sm text-slate-600">{tituloPeriodo}</div>
             <div className="text-sm text-slate-600">{mesNombre(periodo.mes)} {periodo.anio}</div>
           </div>
@@ -92,6 +94,7 @@ export default function BoletaImprimirPage() {
           <span className="text-sm font-semibold uppercase tracking-wide">Líquido a recibir</span>
           <span className="text-xl font-bold">{money(boleta.liquido)}</span>
         </div>
+        <p className="mt-1 text-xs italic text-slate-500">{numeroEnLetras(boleta.liquido)}</p>
 
         {boleta.observaciones && (
           <p className="mt-3 text-xs text-slate-500">Observaciones: {boleta.observaciones}</p>

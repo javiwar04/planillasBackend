@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { money } from "@/lib/format";
+import { numeroEnLetras } from "@/lib/numeroEnLetras";
 import { Logo } from "@/components/Logo";
 
 const EMPRESA = "Corporación Petenera de Turismo, S.A.";
@@ -67,6 +68,7 @@ export default function FiniquitoPage() {
           <span className="text-sm font-semibold uppercase tracking-wide">Total a pagar</span>
           <span className="text-xl font-bold">{money(d.total)}</span>
         </div>
+        <p className="mt-1 text-xs italic text-slate-500">{numeroEnLetras(d.total)}</p>
 
         <div className="mt-16 grid grid-cols-2 gap-12">
           <Firma t="Entregado por" />

@@ -61,6 +61,7 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   if (res.status === 401) {
     clearSession();
     if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      sessionStorage.setItem("corpetur_sesion_expirada", "1");
       window.location.href = "/login";
     }
     throw new ApiError("Sesión expirada o no autorizada.", 401);

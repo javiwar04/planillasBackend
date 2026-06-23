@@ -18,6 +18,14 @@ export default function LoginPage() {
     if (!cargando && usuario) router.replace("/");
   }, [cargando, usuario, router]);
 
+  // Aviso si llegó aquí por sesión expirada.
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("corpetur_sesion_expirada")) {
+      setError("Tu sesión expiró. Ingresa de nuevo.");
+      sessionStorage.removeItem("corpetur_sesion_expirada");
+    }
+  }, []);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
