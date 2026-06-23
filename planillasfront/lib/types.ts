@@ -36,6 +36,11 @@ export interface Departamento {
   nombre: string;
 }
 
+export interface Puesto {
+  puestoId: number;
+  nombre: string;
+}
+
 export type TipoEmpleado = "PLANILLA" | "EXTRA";
 
 export interface Empleado {

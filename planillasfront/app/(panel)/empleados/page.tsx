@@ -6,7 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
-import type { Empleado, EmpleadoCreate, Establecimiento, Departamento } from "@/lib/types";
+import type { Empleado, EmpleadoCreate, Establecimiento, Departamento, Puesto } from "@/lib/types";
 
 const VACIO: EmpleadoCreate = {
   nombres: "", apellidos: "", nit: "", dpi: "", codigo: "",
@@ -18,6 +18,7 @@ export default function EmpleadosPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [establecimientos, setEstablecimientos] = useState<Establecimiento[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
+  const [puestos, setPuestos] = useState<Puesto[]>([]);
   const toast = useToast();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,14 +34,16 @@ export default function EmpleadosPage() {
     setCargando(true);
     setError(null);
     try {
-      const [emps, ests, deps] = await Promise.all([
+      const [emps, ests, deps, pues] = await Promise.all([
         api<Empleado[]>("/empleados?soloActivos=true"),
         api<Establecimiento[]>("/establecimientos"),
         api<Departamento[]>("/departamentos"),
+        api<Puesto[]>("/puestos"),
       ]);
       setEmpleados(emps);
       setEstablecimientos(ests);
       setDepartamentos(deps);
+      setPuestos(pues);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudieron cargar los datos.");
     } finally {
@@ -143,6 +146,7 @@ export default function EmpleadosPage() {
               <tr>
                 <th className="th">Nombre</th>
                 <th className="th">Establecimiento</th>
+                <th className="th">Cargo</th>
                 <th className="th">Tipo</th>
                 <th className="th text-right">Sueldo</th>
                 <th className="th text-right">Quincena</th>
@@ -151,9 +155,9 @@ export default function EmpleadosPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <tr><td colSpan={6} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
+                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
               ) : filtrados.length === 0 ? (
-                <tr><td colSpan={6} className="td py-10 text-center text-slate-400">
+                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">
                   {empleados.length === 0 ? "Sin empleados todavía." : "Sin coincidencias."}
                 </td></tr>
               ) : (
@@ -164,6 +168,7 @@ export default function EmpleadosPage() {
                       {e.nit && <div className="text-xs text-slate-400">NIT {e.nit}</div>}
                     </td>
                     <td className="td">{e.establecimientoNombre}</td>
+                    <td className="td text-slate-600">{puestos.find((p) => p.puestoId === e.puestoId)?.nombre ?? "—"}</td>
                     <td className="td">
                       <span className={`badge ${e.tipo === "PLANILLA" ? "bg-brand-100 text-brand-800" : "bg-amber-100 text-amber-700"}`}>
                         {e.tipo}
@@ -222,6 +227,15 @@ export default function EmpleadosPage() {
                     <option value={0}>—</option>
                     {departamentos.map((d) => (
                       <option key={d.departamentoId} value={d.departamentoId}>{d.nombre}</option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Cargo (puesto)">
+                  <select className="input" value={form.puestoId ?? 0}
+                    onChange={(e) => setForm({ ...form, puestoId: Number(e.target.value) || null })}>
+                    <option value={0}>—</option>
+                    {puestos.map((p) => (
+                      <option key={p.puestoId} value={p.puestoId}>{p.nombre}</option>
                     ))}
                   </select>
                 </Campo>
