@@ -85,6 +85,8 @@ export default function PeriodoDetallePage() {
 
   useEffect(() => { setPagina(1); }, [filtroEstab, busqueda]);
 
+  const etiqueta = () => (periodo ? `${periodo.tipo}_${periodo.mes}_${periodo.anio}` : String(periodoId));
+
   function exportar() {
     const filas = boletasFiltradas.map((b) => ({
       Colaborador: b.empleadoNombre,
@@ -94,8 +96,25 @@ export default function PeriodoDetallePage() {
       Líquido: b.liquido,
       Estado: b.estado,
     }));
-    const etq = periodo ? `${periodo.tipo}_${periodo.mes}_${periodo.anio}` : periodoId;
-    exportarExcel(`planilla_${etq}`, filas, "Planilla");
+    exportarExcel(`planilla_${etiqueta()}`, filas, "Planilla");
+  }
+
+  // Lote de pago para el banco: solo líquido > 0; marca los que no tienen cuenta.
+  function exportarBanco() {
+    const filas = boletasFiltradas
+      .filter((b) => b.liquido > 0)
+      .map((b) => {
+        const e = empMap.get(b.empleadoId);
+        return {
+          Colaborador: b.empleadoNombre,
+          NIT: e?.nit ?? "",
+          Banco: e?.banco ?? "",
+          Cuenta: e?.cuentaBanco ?? "(SIN CUENTA)",
+          Monto: b.liquido,
+        };
+      });
+    if (filas.length === 0) { setError("No hay pagos con líquido positivo para exportar."); return; }
+    exportarExcel(`pago_banco_${etiqueta()}`, filas, "Pago banco");
   }
 
   async function abrirBoleta(id: number) {
@@ -153,6 +172,9 @@ export default function PeriodoDetallePage() {
         <span className="text-sm text-slate-500">{boletasFiltradas.length} boletas</span>
         <button onClick={exportar} disabled={boletasFiltradas.length === 0} className="btn-ghost btn-sm ml-auto">
           Exportar Excel
+        </button>
+        <button onClick={exportarBanco} disabled={boletasFiltradas.length === 0} className="btn-ghost btn-sm">
+          Archivo de pago al banco
         </button>
       </div>
 
