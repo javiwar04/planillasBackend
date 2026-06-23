@@ -56,6 +56,12 @@ public record EmpleadoMovimientoDto(
     int? PuestoNuevoId, string? PuestoNuevo,
     decimal? SueldoAnterior, decimal? SueldoNuevo);
 
+// --- Vacaciones ---
+public record VacacionDto(int VacacionId, int EmpleadoId, string? EmpleadoNombre,
+    DateOnly FechaInicio, DateOnly FechaFin, decimal Dias, string? Observacion);
+public record VacacionCreateDto(int EmpleadoId, DateOnly FechaInicio, DateOnly FechaFin,
+    decimal Dias, string? Observacion);
+
 // --- Catálogos simples ---
 public record DepartamentoDto(int DepartamentoId, string Nombre);
 public record DepartamentoCreateDto(string Nombre);

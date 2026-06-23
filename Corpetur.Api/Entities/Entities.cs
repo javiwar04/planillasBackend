@@ -94,6 +94,20 @@ public class EmpleadoMovimiento
     public DateTime CreadoEn { get; set; }
 }
 
+// Registro de vacaciones gozadas por el empleado (períodos tomados).
+[Table("Vacacion")]
+public class Vacacion
+{
+    [Key] public int VacacionId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    public DateOnly FechaInicio { get; set; }
+    public DateOnly FechaFin { get; set; }
+    [Column(TypeName = "decimal(5,2)")] public decimal Dias { get; set; }
+    [MaxLength(200)] public string? Observacion { get; set; }
+    public DateTime CreadoEn { get; set; }
+}
+
 [Table("PeriodoPago")]
 public class PeriodoPago
 {

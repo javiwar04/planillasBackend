@@ -41,6 +41,16 @@ export interface Puesto {
   nombre: string;
 }
 
+export interface Vacacion {
+  vacacionId: number;
+  empleadoId: number;
+  empleadoNombre?: string | null;
+  fechaInicio: string;
+  fechaFin: string;
+  dias: number;
+  observacion?: string | null;
+}
+
 export interface EmpleadoMovimiento {
   empleadoMovimientoId: number;
   empleadoId: number;

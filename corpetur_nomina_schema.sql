@@ -105,6 +105,18 @@ CREATE TABLE dbo.EmpleadoMovimiento (
 );
 CREATE INDEX IX_EmpleadoMovimiento_Empleado ON dbo.EmpleadoMovimiento(EmpleadoId);
 
+-- Vacaciones gozadas (períodos tomados por el empleado).
+CREATE TABLE dbo.Vacacion (
+    VacacionId   INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId   INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    FechaInicio  DATE NOT NULL,
+    FechaFin     DATE NOT NULL,
+    Dias         DECIMAL(5,2) NOT NULL,
+    Observacion  NVARCHAR(200) NULL,
+    CreadoEn     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_Vacacion_Empleado ON dbo.Vacacion(EmpleadoId);
+
 -- ============================================================================
 -- 3. PERÍODOS DE PAGO  (quincena y fin de mes)
 -- ============================================================================

@@ -68,3 +68,6 @@ export const IconChevron = (p: P) => (
 export const IconMetric = (p: P) => (
   <svg {...base(p)}><path d="M3 3v18h18" /><path d="m7 14 3-4 3 2 4-6" /></svg>
 );
+export const IconSun = (p: P) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></svg>
+);
