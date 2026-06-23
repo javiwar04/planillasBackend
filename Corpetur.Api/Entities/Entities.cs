@@ -108,6 +108,24 @@ public class Vacacion
     public DateTime CreadoEn { get; set; }
 }
 
+// Ausencias / incapacidades del empleado (control; el descuento al pago se captura
+// como línea manual en la boleta si aplica).
+[Table("Ausencia")]
+public class Ausencia
+{
+    [Key] public int AusenciaId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    public DateOnly FechaInicio { get; set; }
+    public DateOnly FechaFin { get; set; }
+    [Column(TypeName = "decimal(5,2)")] public decimal Dias { get; set; }
+    // INCAPACIDAD | PERMISO_CON_GOCE | PERMISO_SIN_GOCE | FALTA | SUSPENSION
+    [MaxLength(20)] public string Tipo { get; set; } = null!;
+    public bool Descontable { get; set; }   // si afecta el pago
+    [MaxLength(200)] public string? Observacion { get; set; }
+    public DateTime CreadoEn { get; set; }
+}
+
 [Table("PeriodoPago")]
 public class PeriodoPago
 {

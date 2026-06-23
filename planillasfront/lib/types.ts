@@ -51,6 +51,19 @@ export interface Vacacion {
   observacion?: string | null;
 }
 
+export type TipoAusencia = "INCAPACIDAD" | "PERMISO_CON_GOCE" | "PERMISO_SIN_GOCE" | "FALTA" | "SUSPENSION";
+export interface Ausencia {
+  ausenciaId: number;
+  empleadoId: number;
+  empleadoNombre?: string | null;
+  fechaInicio: string;
+  fechaFin: string;
+  dias: number;
+  tipo: TipoAusencia;
+  descontable: boolean;
+  observacion?: string | null;
+}
+
 export interface EmpleadoMovimiento {
   empleadoMovimientoId: number;
   empleadoId: number;

@@ -117,6 +117,21 @@ CREATE TABLE dbo.Vacacion (
 );
 CREATE INDEX IX_Vacacion_Empleado ON dbo.Vacacion(EmpleadoId);
 
+-- Ausencias / incapacidades (control; el descuento al pago se captura como línea
+-- manual en la boleta si aplica).
+CREATE TABLE dbo.Ausencia (
+    AusenciaId   INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId   INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    FechaInicio  DATE NOT NULL,
+    FechaFin     DATE NOT NULL,
+    Dias         DECIMAL(5,2) NOT NULL,
+    Tipo         NVARCHAR(20) NOT NULL,   -- INCAPACIDAD | PERMISO_CON_GOCE | PERMISO_SIN_GOCE | FALTA | SUSPENSION
+    Descontable  BIT NOT NULL DEFAULT 0,
+    Observacion  NVARCHAR(200) NULL,
+    CreadoEn     DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_Ausencia_Empleado ON dbo.Ausencia(EmpleadoId);
+
 -- ============================================================================
 -- 3. PERÍODOS DE PAGO  (quincena y fin de mes)
 -- ============================================================================

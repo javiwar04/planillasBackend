@@ -62,6 +62,12 @@ public record VacacionDto(int VacacionId, int EmpleadoId, string? EmpleadoNombre
 public record VacacionCreateDto(int EmpleadoId, DateOnly FechaInicio, DateOnly FechaFin,
     decimal Dias, string? Observacion);
 
+// --- Ausencias / incapacidades ---
+public record AusenciaDto(int AusenciaId, int EmpleadoId, string? EmpleadoNombre,
+    DateOnly FechaInicio, DateOnly FechaFin, decimal Dias, string Tipo, bool Descontable, string? Observacion);
+public record AusenciaCreateDto(int EmpleadoId, DateOnly FechaInicio, DateOnly FechaFin,
+    decimal Dias, string Tipo, bool Descontable, string? Observacion);
+
 // --- Catálogos simples ---
 public record DepartamentoDto(int DepartamentoId, string Nombre);
 public record DepartamentoCreateDto(string Nombre);
