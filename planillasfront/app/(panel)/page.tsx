@@ -55,6 +55,22 @@ export default function DashboardPage() {
 
   const periodoActual = periodos.find((p) => p.periodoPagoId === periodoSel);
 
+  // Neto del período por establecimiento (boleta -> empleado -> establecimiento).
+  const netoPorEstab = useMemo(() => {
+    const estabDe = new Map(empleados.map((e) => [e.empleadoId, e.establecimientoNombre ?? "—"]));
+    const map = new Map<string, number>();
+    for (const b of boletas) {
+      const k = estabDe.get(b.empleadoId) ?? "—";
+      map.set(k, (map.get(k) ?? 0) + b.liquido);
+    }
+    return [...map.entries()].sort((a, b) => b[1] - a[1]);
+  }, [boletas, empleados]);
+  const maxNeto = Math.max(1, ...netoPorEstab.map(([, v]) => v));
+
+  // Alertas de datos por revisar.
+  const sinNit = empleados.filter((e) => e.tipo === "PLANILLA" && !e.nit).length;
+  const sinCuenta = empleados.filter((e) => !e.cuentaBanco).length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -123,6 +139,75 @@ export default function DashboardPage() {
             <Accion href="/empleados" icon={<IconUsers />} titulo="Colaboradores" desc="Alta y edición" />
             <Accion href="/reportes" icon={<IconChart />} titulo="Reportes" desc="Histórico y pasivo laboral" />
           </div>
+        </div>
+      </div>
+
+      {/* Segunda fila: neto por establecimiento + períodos recientes */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="card lg:col-span-2">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="font-semibold text-slate-900">Neto por establecimiento</h2>
+            <p className="text-xs text-slate-400">
+              {periodoActual ? `${mesNombre(periodoActual.mes)} ${periodoActual.anio} · ${periodoActual.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}` : "Selecciona un período"}
+            </p>
+          </div>
+          <div className="space-y-3 p-5">
+            {netoPorEstab.length === 0 ? (
+              <p className="py-6 text-center text-sm text-slate-400">Sin boletas en este período.</p>
+            ) : netoPorEstab.map(([nombre, v]) => (
+              <div key={nombre}>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="text-slate-600">{nombre}</span>
+                  <span className="font-medium text-slate-800">{money(v)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-brand-500" style={{ width: `${(v / maxNeto) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Períodos recientes */}
+          <div className="card">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <h2 className="font-semibold text-slate-900">Períodos recientes</h2>
+              <Link href="/periodos" className="text-sm font-medium text-brand-700 hover:underline">Ver</Link>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {periodos.length === 0 ? (
+                <p className="px-5 py-6 text-center text-sm text-slate-400">Sin períodos.</p>
+              ) : periodos.slice(0, 5).map((p) => (
+                <Link key={p.periodoPagoId} href={`/periodos/${p.periodoPagoId}`}
+                  className="flex items-center justify-between px-5 py-3 text-sm transition hover:bg-slate-50">
+                  <span className="text-slate-700">{mesNombre(p.mes)} {p.anio} · {p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}</span>
+                  <span className={`badge ${p.estado === "CERRADO" ? "bg-brand-100 text-brand-800" : p.estado === "CALCULADO" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{p.estado}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Por revisar */}
+          {(sinNit > 0 || sinCuenta > 0) && (
+            <div className="card p-5">
+              <h2 className="mb-2 font-semibold text-slate-900">Por revisar</h2>
+              <ul className="space-y-1 text-sm">
+                {sinNit > 0 && (
+                  <li className="flex justify-between">
+                    <Link href="/empleados" className="text-amber-700 hover:underline">Planilla sin NIT</Link>
+                    <span className="font-semibold text-amber-700">{sinNit}</span>
+                  </li>
+                )}
+                {sinCuenta > 0 && (
+                  <li className="flex justify-between">
+                    <Link href="/empleados" className="text-amber-700 hover:underline">Sin cuenta bancaria</Link>
+                    <span className="font-semibold text-amber-700">{sinCuenta}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
