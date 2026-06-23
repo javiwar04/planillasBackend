@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
-import { mesNombre } from "@/lib/format";
+import { mesNombre, money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
-import type { Periodo, PeriodoCreate, GenerarResultado, ProvisionesResultado } from "@/lib/types";
+import type { Periodo, PeriodoCreate, GenerarResultado, ProvisionesResultado, Empleado } from "@/lib/types";
 
 const hoy = new Date();
 const VACIO: PeriodoCreate = {
@@ -34,6 +34,13 @@ export default function PeriodosPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
+  // Modal de generación de quincena con overrides por persona.
+  const [genPeriodo, setGenPeriodo] = useState<Periodo | null>(null);
+  const [empleadosGen, setEmpleadosGen] = useState<Empleado[]>([]);
+  const [overrides, setOverrides] = useState<Record<number, string>>({});
+  const [busquedaGen, setBusquedaGen] = useState("");
+  const [generando, setGenerando] = useState(false);
+
   const cargar = useCallback(async () => {
     setCargando(true);
     setError(null);
@@ -61,6 +68,43 @@ export default function PeriodosPage() {
       setFormError(err instanceof ApiError ? err.message : "No se pudo crear el período.");
     } finally {
       setGuardando(false);
+    }
+  }
+
+  // Abre el modal de quincena: carga empleados de planilla y prepara overrides.
+  async function abrirGenerarQuincena(p: Periodo) {
+    setGenPeriodo(p);
+    setBusquedaGen("");
+    setEmpleadosGen([]);
+    setOverrides({});
+    try {
+      const emps = await api<Empleado[]>("/empleados?tipo=PLANILLA&soloActivos=true");
+      setEmpleadosGen(emps);
+      setOverrides(Object.fromEntries(emps.map((e) => [e.empleadoId, String(e.montoQuincena)])));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudieron cargar los colaboradores.");
+    }
+  }
+
+  async function confirmarGenerarQuincena() {
+    if (!genPeriodo) return;
+    setGenerando(true);
+    setError(null);
+    try {
+      // Solo se envían los que difieren del monto estándar de la persona.
+      const overridesQuincena = empleadosGen
+        .filter((e) => Number(overrides[e.empleadoId]) !== e.montoQuincena)
+        .map((e) => ({ empleadoId: e.empleadoId, monto: Number(overrides[e.empleadoId] || 0) }));
+      const r = await api<GenerarResultado>(`/periodospago/${genPeriodo.periodoPagoId}/generar`,
+        { method: "POST", body: { overridesQuincena } });
+      setAviso(`Quincena generada: ${r.boletasCreadas} nuevas, ${r.boletasActualizadas} actualizadas` +
+        (overridesQuincena.length ? ` (${overridesQuincena.length} con ajuste).` : "."));
+      setGenPeriodo(null);
+      await cargar();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo generar la quincena.");
+    } finally {
+      setGenerando(false);
     }
   }
 
@@ -140,7 +184,9 @@ export default function PeriodosPage() {
                           <Link href={`/periodos/${p.periodoPagoId}`} className="btn-ghost btn-sm">Ver boletas</Link>
                           {p.estado !== "CERRADO" && (
                             <>
-                              <button disabled={busy} onClick={() => accion(p, "generar")} className="btn-ghost btn-sm">
+                              <button disabled={busy}
+                                onClick={() => p.tipo === "QUINCENA" ? abrirGenerarQuincena(p) : accion(p, "generar")}
+                                className="btn-ghost btn-sm">
                                 {busy ? "…" : "Generar"}
                               </button>
                               {p.tipo === "FIN_MES" && (
@@ -213,6 +259,62 @@ export default function PeriodosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: generar quincena con overrides */}
+      {genPeriodo && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="card flex max-h-[88vh] w-full max-w-xl flex-col p-6">
+            <h2 className="text-lg font-bold text-slate-900">
+              Generar quincena · {mesNombre(genPeriodo.mes)} {genPeriodo.anio}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Cada colaborador recibe su anticipo estándar. Ajusta solo los que cambien este mes.
+            </p>
+
+            <input className="input mt-3" placeholder="Buscar colaborador…"
+              value={busquedaGen} onChange={(e) => setBusquedaGen(e.target.value)} />
+
+            <div className="mt-3 flex-1 overflow-y-auto rounded-xl border border-slate-200">
+              {empleadosGen.length === 0 ? (
+                <p className="p-4 text-sm text-slate-400">Cargando colaboradores…</p>
+              ) : (
+                empleadosGen
+                  .filter((e) => `${e.nombres} ${e.apellidos}`.toLowerCase().includes(busquedaGen.toLowerCase()))
+                  .map((e) => {
+                    const distinto = Number(overrides[e.empleadoId]) !== e.montoQuincena;
+                    return (
+                      <div key={e.empleadoId} className="flex items-center justify-between gap-3 border-b border-slate-50 px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-slate-800">{e.nombres} {e.apellidos}</div>
+                          <div className="text-xs text-slate-400">Estándar: {money(e.montoQuincena)}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="number" step="0.01" min="0"
+                            className={`input w-28 py-1 ${distinto ? "border-amber-400" : ""}`}
+                            value={overrides[e.empleadoId] ?? ""}
+                            onChange={(ev) => setOverrides({ ...overrides, [e.empleadoId]: ev.target.value })} />
+                          {distinto && (
+                            <button type="button" title="Restaurar estándar"
+                              onClick={() => setOverrides({ ...overrides, [e.empleadoId]: String(e.montoQuincena) })}
+                              className="text-xs text-slate-400 hover:text-slate-700">↺</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setGenPeriodo(null)} className="btn-ghost">Cancelar</button>
+              <button type="button" onClick={confirmarGenerarQuincena} disabled={generando || empleadosGen.length === 0}
+                className="btn-primary">
+                {generando ? "Generando…" : "Generar quincena"}
+              </button>
+            </div>
           </div>
         </div>
       )}
