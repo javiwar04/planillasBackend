@@ -71,6 +71,24 @@ export default function DashboardPage() {
   const sinNit = empleados.filter((e) => e.tipo === "PLANILLA" && !e.nit).length;
   const sinCuenta = empleados.filter((e) => !e.cuentaBanco).length;
 
+  // Tendencia del neto por mes (períodos FIN_MES, últimos 6).
+  const [trend, setTrend] = useState<{ label: string; neto: number }[]>([]);
+  useEffect(() => {
+    const fm = periodos
+      .filter((p) => p.tipo === "FIN_MES")
+      .sort((a, b) => a.anio - b.anio || a.mes - b.mes)
+      .slice(-6);
+    if (fm.length === 0) { setTrend([]); return; }
+    Promise.all(
+      fm.map((p) =>
+        api<BoletaLista[]>(`/boletas?periodoId=${p.periodoPagoId}`)
+          .then((bs) => ({ label: `${mesNombre(p.mes).slice(0, 3)} ${String(p.anio).slice(2)}`, neto: bs.reduce((s, b) => s + b.liquido, 0) }))
+          .catch(() => ({ label: `${mesNombre(p.mes).slice(0, 3)} ${String(p.anio).slice(2)}`, neto: 0 }))
+      )
+    ).then(setTrend);
+  }, [periodos]);
+  const maxTrend = Math.max(1, ...trend.map((t) => t.neto));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -210,6 +228,24 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Tendencia del neto */}
+      {trend.length > 0 && (
+        <div className="card p-5">
+          <h2 className="font-semibold text-slate-900">Tendencia del neto (fin de mes)</h2>
+          <p className="mb-4 text-xs text-slate-400">Líquido pagado por mes</p>
+          <div className="flex items-end gap-4" style={{ height: 180 }}>
+            {trend.map((t) => (
+              <div key={t.label} className="flex flex-1 flex-col items-center justify-end gap-2">
+                <span className="text-xs font-medium text-slate-600">{money(t.neto)}</span>
+                <div className="w-full rounded-t-lg bg-brand-500 transition-all"
+                  style={{ height: `${Math.max(4, (t.neto / maxTrend) * 130)}px` }} />
+                <span className="text-xs text-slate-400">{t.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
