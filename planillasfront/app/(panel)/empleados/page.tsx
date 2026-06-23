@@ -6,7 +6,9 @@ import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
-import type { Empleado, EmpleadoCreate, Establecimiento, Departamento, Puesto } from "@/lib/types";
+import type { Empleado, EmpleadoCreate, Establecimiento, Departamento, Puesto, EmpleadoMovimiento } from "@/lib/types";
+
+const hoyISO = new Date().toISOString().slice(0, 10);
 
 const VACIO: EmpleadoCreate = {
   nombres: "", apellidos: "", nit: "", dpi: "", codigo: "",
@@ -29,6 +31,12 @@ export default function EmpleadosPage() {
   const [form, setForm] = useState<EmpleadoCreate>(VACIO);
   const [formError, setFormError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+
+  // Traslado
+  const [trasladoEmp, setTrasladoEmp] = useState<Empleado | null>(null);
+  const [tForm, setTForm] = useState({ fecha: hoyISO, establecimientoId: 0, departamentoId: 0, puestoId: 0, motivo: "" });
+  const [historial, setHistorial] = useState<EmpleadoMovimiento[]>([]);
+  const [tEnviando, setTEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -97,6 +105,40 @@ export default function EmpleadosPage() {
       setFormError(err instanceof ApiError ? err.message : "No se pudo guardar.");
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function abrirTraslado(e: Empleado) {
+    setTrasladoEmp(e);
+    setTForm({ fecha: hoyISO, establecimientoId: e.establecimientoId, departamentoId: e.departamentoId ?? 0, puestoId: e.puestoId ?? 0, motivo: "" });
+    setHistorial([]);
+    try {
+      setHistorial(await api<EmpleadoMovimiento[]>(`/empleados/${e.empleadoId}/movimientos`));
+    } catch { /* sin historial aún */ }
+  }
+
+  async function enviarTraslado(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!trasladoEmp) return;
+    setTEnviando(true);
+    try {
+      await api(`/empleados/${trasladoEmp.empleadoId}/traslado`, {
+        method: "POST",
+        body: {
+          fecha: tForm.fecha,
+          establecimientoId: tForm.establecimientoId || null,
+          departamentoId: tForm.departamentoId || null,
+          puestoId: tForm.puestoId || null,
+          motivo: tForm.motivo.trim() || null,
+        },
+      });
+      toast.success("Traslado registrado.");
+      setTrasladoEmp(null);
+      await cargar();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo registrar el traslado.");
+    } finally {
+      setTEnviando(false);
     }
   }
 
@@ -178,6 +220,7 @@ export default function EmpleadosPage() {
                     <td className="td text-right">{e.tipo === "PLANILLA" ? money(e.montoQuincena) : "—"}</td>
                     <td className="td text-right whitespace-nowrap">
                       <button onClick={() => abrirEditar(e)} className="mr-3 font-medium text-brand-700 hover:underline">Editar</button>
+                      <button onClick={() => abrirTraslado(e)} className="mr-3 font-medium text-slate-600 hover:underline">Traslado</button>
                       <button onClick={() => darDeBaja(e)} className="font-medium text-red-600 hover:underline">Baja</button>
                     </td>
                   </tr>
@@ -282,6 +325,80 @@ export default function EmpleadosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de traslado */}
+      {trasladoEmp && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="card flex max-h-[88vh] w-full max-w-lg flex-col p-6">
+            <h2 className="text-lg font-bold text-slate-900">Traslado · {trasladoEmp.nombres} {trasladoEmp.apellidos}</h2>
+            <p className="mt-1 text-sm text-slate-500">Cambia establecimiento, departamento o puesto. Se guarda el historial.</p>
+
+            <form onSubmit={enviarTraslado} className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Campo label="Fecha efectiva" req>
+                  <input type="date" className="input" required value={tForm.fecha}
+                    onChange={(e) => setTForm({ ...tForm, fecha: e.target.value })} />
+                </Campo>
+                <Campo label="Motivo">
+                  <input className="input" value={tForm.motivo}
+                    onChange={(e) => setTForm({ ...tForm, motivo: e.target.value })} />
+                </Campo>
+                <Campo label="Establecimiento">
+                  <select className="input" value={tForm.establecimientoId}
+                    onChange={(e) => setTForm({ ...tForm, establecimientoId: Number(e.target.value) })}>
+                    {establecimientos.map((es) => (
+                      <option key={es.establecimientoId} value={es.establecimientoId}>{es.nombre}</option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Departamento">
+                  <select className="input" value={tForm.departamentoId}
+                    onChange={(e) => setTForm({ ...tForm, departamentoId: Number(e.target.value) })}>
+                    <option value={0}>—</option>
+                    {departamentos.map((d) => (
+                      <option key={d.departamentoId} value={d.departamentoId}>{d.nombre}</option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Cargo (puesto)">
+                  <select className="input" value={tForm.puestoId}
+                    onChange={(e) => setTForm({ ...tForm, puestoId: Number(e.target.value) })}>
+                    <option value={0}>—</option>
+                    {puestos.map((p) => (
+                      <option key={p.puestoId} value={p.puestoId}>{p.nombre}</option>
+                    ))}
+                  </select>
+                </Campo>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setTrasladoEmp(null)} className="btn-ghost">Cancelar</button>
+                <button type="submit" disabled={tEnviando} className="btn-primary">
+                  {tEnviando ? "Guardando…" : "Registrar traslado"}
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5 min-h-0 flex-1 overflow-y-auto">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Historial</div>
+              {historial.length === 0 ? (
+                <p className="text-sm text-slate-400">Sin traslados registrados.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {historial.map((m) => (
+                    <li key={m.empleadoMovimientoId} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                      <div className="font-medium text-slate-700">{m.fecha}{m.motivo ? ` · ${m.motivo}` : ""}</div>
+                      {m.establecimientoNuevo && <div className="text-xs text-slate-500">Establecimiento: {m.establecimientoAnterior ?? "—"} → <b>{m.establecimientoNuevo}</b></div>}
+                      {m.departamentoNuevo && <div className="text-xs text-slate-500">Departamento: {m.departamentoAnterior ?? "—"} → <b>{m.departamentoNuevo}</b></div>}
+                      {m.puestoNuevo && <div className="text-xs text-slate-500">Puesto: {m.puestoAnterior ?? "—"} → <b>{m.puestoNuevo}</b></div>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -126,6 +126,79 @@ public class EmpleadosController : ControllerBase
         return NoContent();
     }
 
+    // Traslado: registra el movimiento (anterior → nuevo) y actualiza el valor vigente
+    // del empleado. Solo cambia las dimensiones que se envían.
+    [HttpPost("{id:int}/traslado")]
+    public async Task<ActionResult<EmpleadoMovimientoDto>> Traslado(int id, TrasladoRequest dto)
+    {
+        var e = await _db.Empleados.FindAsync(id);
+        if (e is null) return NotFound();
+
+        var cambiaEstab = dto.EstablecimientoId is not null && dto.EstablecimientoId != e.EstablecimientoId;
+        var cambiaDepto = dto.DepartamentoId is not null && dto.DepartamentoId != e.DepartamentoId;
+        var cambiaPuesto = dto.PuestoId is not null && dto.PuestoId != e.PuestoId;
+        if (!cambiaEstab && !cambiaDepto && !cambiaPuesto)
+            return BadRequest("Indica al menos un cambio (establecimiento, departamento o puesto).");
+
+        if (cambiaEstab && !await _db.Establecimientos.AnyAsync(x => x.EstablecimientoId == dto.EstablecimientoId))
+            return BadRequest("El establecimiento destino no existe.");
+        if (cambiaDepto && !await _db.Departamentos.AnyAsync(x => x.DepartamentoId == dto.DepartamentoId))
+            return BadRequest("El departamento destino no existe.");
+        if (cambiaPuesto && !await _db.Puestos.AnyAsync(x => x.PuestoId == dto.PuestoId))
+            return BadRequest("El puesto destino no existe.");
+
+        var mov = new EmpleadoMovimiento
+        {
+            EmpleadoId = id, Fecha = dto.Fecha, Motivo = dto.Motivo,
+            EstablecimientoAnteriorId = cambiaEstab ? e.EstablecimientoId : null,
+            EstablecimientoNuevoId = cambiaEstab ? dto.EstablecimientoId : null,
+            DepartamentoAnteriorId = cambiaDepto ? e.DepartamentoId : null,
+            DepartamentoNuevoId = cambiaDepto ? dto.DepartamentoId : null,
+            PuestoAnteriorId = cambiaPuesto ? e.PuestoId : null,
+            PuestoNuevoId = cambiaPuesto ? dto.PuestoId : null,
+        };
+        _db.EmpleadoMovimientos.Add(mov);
+
+        if (cambiaEstab) e.EstablecimientoId = dto.EstablecimientoId!.Value;
+        if (cambiaDepto) e.DepartamentoId = dto.DepartamentoId;
+        if (cambiaPuesto) e.PuestoId = dto.PuestoId;
+        e.ActualizadoEn = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return await MovimientoDto(mov.EmpleadoMovimientoId);
+    }
+
+    // Historial de traslados del empleado (más reciente primero).
+    [HttpGet("{id:int}/movimientos")]
+    public async Task<ActionResult<IEnumerable<EmpleadoMovimientoDto>>> Movimientos(int id)
+    {
+        var movs = await _db.EmpleadoMovimientos.AsNoTracking()
+            .Where(m => m.EmpleadoId == id)
+            .OrderByDescending(m => m.Fecha).ThenByDescending(m => m.EmpleadoMovimientoId)
+            .ToListAsync();
+        var estab = await _db.Establecimientos.AsNoTracking().ToDictionaryAsync(x => x.EstablecimientoId, x => x.Nombre);
+        var depto = await _db.Departamentos.AsNoTracking().ToDictionaryAsync(x => x.DepartamentoId, x => x.Nombre);
+        var pues = await _db.Puestos.AsNoTracking().ToDictionaryAsync(x => x.PuestoId, x => x.Nombre);
+        static string? N(Dictionary<int, string> d, int? k) => k is int i && d.TryGetValue(i, out var v) ? v : null;
+        return Ok(movs.Select(m => new EmpleadoMovimientoDto(
+            m.EmpleadoMovimientoId, m.EmpleadoId, m.Fecha, m.Motivo,
+            m.EstablecimientoAnteriorId, N(estab, m.EstablecimientoAnteriorId),
+            m.EstablecimientoNuevoId, N(estab, m.EstablecimientoNuevoId),
+            m.DepartamentoAnteriorId, N(depto, m.DepartamentoAnteriorId),
+            m.DepartamentoNuevoId, N(depto, m.DepartamentoNuevoId),
+            m.PuestoAnteriorId, N(pues, m.PuestoAnteriorId),
+            m.PuestoNuevoId, N(pues, m.PuestoNuevoId))).ToList());
+    }
+
+    private async Task<ActionResult<EmpleadoMovimientoDto>> MovimientoDto(int movId)
+    {
+        var m = await _db.EmpleadoMovimientos.FindAsync(movId);
+        if (m is null) return NotFound();
+        var resp = await Movimientos(m.EmpleadoId);
+        var dto = (resp.Result as OkObjectResult)?.Value as IEnumerable<EmpleadoMovimientoDto>;
+        return Ok(dto?.FirstOrDefault(x => x.EmpleadoMovimientoId == movId));
+    }
+
     private static EmpleadoDto ToDto(Empleado e) => new(
         e.EmpleadoId, e.Codigo, e.Nombres, e.Apellidos, e.Dpi, e.Nit,
         e.EstablecimientoId, e.Establecimiento?.Nombre,

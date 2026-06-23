@@ -11,6 +11,7 @@ public class CorpeturDbContext : DbContext
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Puesto> Puestos => Set<Puesto>();
     public DbSet<Empleado> Empleados => Set<Empleado>();
+    public DbSet<EmpleadoMovimiento> EmpleadoMovimientos => Set<EmpleadoMovimiento>();
     public DbSet<PeriodoPago> PeriodosPago => Set<PeriodoPago>();
     public DbSet<Concepto> Conceptos => Set<Concepto>();
     public DbSet<Boleta> Boletas => Set<Boleta>();
@@ -41,5 +42,7 @@ public class CorpeturDbContext : DbContext
 
         b.Entity<Empleado>().Property(e => e.CreadoEn).HasDefaultValueSql("SYSUTCDATETIME()");
         b.Entity<Boleta>().Property(e => e.CreadoEn).HasDefaultValueSql("SYSUTCDATETIME()");
+        b.Entity<EmpleadoMovimiento>().Property(e => e.CreadoEn).HasDefaultValueSql("SYSUTCDATETIME()");
+        b.Entity<EmpleadoMovimiento>().HasIndex(e => e.EmpleadoId);
     }
 }

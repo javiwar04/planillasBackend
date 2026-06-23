@@ -68,6 +68,28 @@ public class Empleado
     public DateTime? ActualizadoEn { get; set; }
 }
 
+// Histórico de traslados de un empleado (establecimiento / departamento / puesto).
+// Guarda el valor anterior y el nuevo con fecha efectiva; el Empleado siempre
+// apunta al valor vigente.
+[Table("EmpleadoMovimiento")]
+public class EmpleadoMovimiento
+{
+    [Key] public int EmpleadoMovimientoId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    public DateOnly Fecha { get; set; }
+    [MaxLength(200)] public string? Motivo { get; set; }
+
+    public int? EstablecimientoAnteriorId { get; set; }
+    public int? EstablecimientoNuevoId { get; set; }
+    public int? DepartamentoAnteriorId { get; set; }
+    public int? DepartamentoNuevoId { get; set; }
+    public int? PuestoAnteriorId { get; set; }
+    public int? PuestoNuevoId { get; set; }
+
+    public DateTime CreadoEn { get; set; }
+}
+
 [Table("PeriodoPago")]
 public class PeriodoPago
 {

@@ -41,6 +41,25 @@ export interface Puesto {
   nombre: string;
 }
 
+export interface EmpleadoMovimiento {
+  empleadoMovimientoId: number;
+  empleadoId: number;
+  fecha: string;
+  motivo?: string | null;
+  establecimientoAnteriorId?: number | null;
+  establecimientoAnterior?: string | null;
+  establecimientoNuevoId?: number | null;
+  establecimientoNuevo?: string | null;
+  departamentoAnteriorId?: number | null;
+  departamentoAnterior?: string | null;
+  departamentoNuevoId?: number | null;
+  departamentoNuevo?: string | null;
+  puestoAnteriorId?: number | null;
+  puestoAnterior?: string | null;
+  puestoNuevoId?: number | null;
+  puestoNuevo?: string | null;
+}
+
 export type TipoEmpleado = "PLANILLA" | "EXTRA";
 
 export interface Empleado {

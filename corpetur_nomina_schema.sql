@@ -86,6 +86,23 @@ CREATE INDEX IX_Empleado_Activo          ON dbo.Empleado(Activo);
 -- NIT único entre quienes lo tienen (índice filtrado: los EXTRA sin NIT no chocan).
 CREATE UNIQUE INDEX UX_Empleado_Nit ON dbo.Empleado(Nit) WHERE Nit IS NOT NULL;
 
+-- Histórico de traslados (establecimiento / departamento / puesto). Guarda el
+-- valor anterior y el nuevo con fecha efectiva; el Empleado apunta al vigente.
+CREATE TABLE dbo.EmpleadoMovimiento (
+    EmpleadoMovimientoId      INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId                INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    Fecha                     DATE NOT NULL,
+    Motivo                    NVARCHAR(200) NULL,
+    EstablecimientoAnteriorId INT NULL,
+    EstablecimientoNuevoId    INT NULL,
+    DepartamentoAnteriorId    INT NULL,
+    DepartamentoNuevoId       INT NULL,
+    PuestoAnteriorId          INT NULL,
+    PuestoNuevoId             INT NULL,
+    CreadoEn                  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_EmpleadoMovimiento_Empleado ON dbo.EmpleadoMovimiento(EmpleadoId);
+
 -- ============================================================================
 -- 3. PERÍODOS DE PAGO  (quincena y fin de mes)
 -- ============================================================================
