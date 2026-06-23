@@ -117,10 +117,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="border-t border-slate-800 p-3">
-          <div className="mb-2 px-3 py-1 text-xs text-slate-400">
+          <Link href="/cuenta" className="mb-2 block rounded-lg px-3 py-1.5 text-xs text-slate-400 transition hover:bg-slate-800 hover:text-white">
             <div className="font-medium text-slate-200">{usuario.nombre}</div>
-            <div>{usuario.rol}</div>
-          </div>
+            <div>{usuario.rol} · Mi cuenta</div>
+          </Link>
           <button onClick={logout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
             <IconLogout className="h-5 w-5" />
