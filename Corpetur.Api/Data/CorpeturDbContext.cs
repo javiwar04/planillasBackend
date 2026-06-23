@@ -25,6 +25,7 @@ public class CorpeturDbContext : DbContext
     public DbSet<ParametroNomina> ParametrosNomina => Set<ParametroNomina>();
     public DbSet<ProvisionLaboral> ProvisionesLaboral => Set<ProvisionLaboral>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Auditoria> Auditorias => Set<Auditoria>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {

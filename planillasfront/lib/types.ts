@@ -16,6 +16,17 @@ export interface LoginResponse {
   usuario: Usuario;
 }
 
+export interface Auditoria {
+  auditoriaId: number;
+  fecha: string;
+  usuarioId?: number | null;
+  usuario?: string | null;
+  accion: "CREAR" | "MODIFICAR" | "ELIMINAR";
+  entidad: string;
+  entidadId?: string | null;
+  detalle?: string | null;
+}
+
 export interface UsuarioCreate {
   nombre: string;
   email: string;

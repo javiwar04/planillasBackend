@@ -132,6 +132,20 @@ CREATE TABLE dbo.Ausencia (
 );
 CREATE INDEX IX_Ausencia_Empleado ON dbo.Ausencia(EmpleadoId);
 
+-- Bitácora de auditoría: quién creó/modificó/eliminó qué y cuándo (la llena un
+-- interceptor de EF; ver Services/Auditoria.cs).
+CREATE TABLE dbo.Auditoria (
+    AuditoriaId  BIGINT IDENTITY(1,1) PRIMARY KEY,
+    Fecha        DATETIME2 NOT NULL,
+    UsuarioId    INT NULL,
+    Usuario      NVARCHAR(120) NULL,
+    Accion       NVARCHAR(12) NOT NULL,   -- CREAR | MODIFICAR | ELIMINAR
+    Entidad      NVARCHAR(60) NOT NULL,
+    EntidadId    NVARCHAR(40) NULL,
+    Detalle      NVARCHAR(500) NULL
+);
+CREATE INDEX IX_Auditoria_Fecha ON dbo.Auditoria(Fecha DESC);
+
 -- ============================================================================
 -- 3. PERÍODOS DE PAGO  (quincena y fin de mes)
 -- ============================================================================

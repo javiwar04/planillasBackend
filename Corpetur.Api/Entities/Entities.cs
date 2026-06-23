@@ -108,6 +108,20 @@ public class Vacacion
     public DateTime CreadoEn { get; set; }
 }
 
+// Bitácora de auditoría: quién creó/modificó/eliminó qué y cuándo.
+[Table("Auditoria")]
+public class Auditoria
+{
+    [Key] public long AuditoriaId { get; set; }
+    public DateTime Fecha { get; set; }
+    public int? UsuarioId { get; set; }
+    [MaxLength(120)] public string? Usuario { get; set; }
+    [MaxLength(12)] public string Accion { get; set; } = null!;   // CREAR | MODIFICAR | ELIMINAR
+    [MaxLength(60)] public string Entidad { get; set; } = null!;
+    [MaxLength(40)] public string? EntidadId { get; set; }
+    [MaxLength(500)] public string? Detalle { get; set; }
+}
+
 // Ausencias / incapacidades del empleado (control; el descuento al pago se captura
 // como línea manual en la boleta si aplica).
 [Table("Ausencia")]

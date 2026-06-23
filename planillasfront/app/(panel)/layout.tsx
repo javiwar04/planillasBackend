@@ -43,6 +43,7 @@ const GRUPOS: Grupo[] = [
       { href: "/reglas", label: "Reglas de bonificación", icon: IconSliders },
       { href: "/metricas", label: "Métricas diarias", icon: IconMetric },
       { href: "/usuarios", label: "Usuarios", icon: IconShield, soloAdmin: true },
+      { href: "/auditoria", label: "Auditoría", icon: IconMetric, soloAdmin: true },
     ],
   },
 ];

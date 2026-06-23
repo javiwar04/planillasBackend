@@ -12,8 +12,14 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Servicios ---
-builder.Services.AddDbContext<CorpeturDbContext>(opt =>
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("CorpeturDb")));
+// Auditoría: usuario actual desde el HttpContext + interceptor que registra cambios.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
+builder.Services.AddScoped<AuditoriaInterceptor>();
+
+builder.Services.AddDbContext<CorpeturDbContext>((sp, opt) =>
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("CorpeturDb"))
+       .AddInterceptors(sp.GetRequiredService<AuditoriaInterceptor>()));
 
 // Motor de cálculo de boletas (bloque 3).
 builder.Services.AddScoped<NominaService>();

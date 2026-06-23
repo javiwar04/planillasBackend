@@ -117,6 +117,10 @@ public record ProvisionLaboralCreateDto(int EmpleadoId, int Anio, byte Mes, deci
     decimal Indemnizacion, decimal Bono14, decimal Aguinaldo, decimal Vacaciones,
     decimal IgssPatronal, decimal Intecap);
 
+// --- Auditoría ---
+public record AuditoriaDto(long AuditoriaId, DateTime Fecha, int? UsuarioId, string? Usuario,
+    string Accion, string Entidad, string? EntidadId, string? Detalle);
+
 // --- Usuarios ---
 public record UsuarioDto(int UsuarioId, string Nombre, string Email, string Rol, bool Activo);
 // La contraseña es opcional al crear: si viene, se guarda hasheada; si no, el usuario
