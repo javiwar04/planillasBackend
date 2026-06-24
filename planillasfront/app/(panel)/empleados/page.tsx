@@ -208,7 +208,9 @@ export default function EmpleadosPage() {
                 filtrados.map((e) => (
                   <tr key={e.empleadoId} className="hover:bg-slate-50">
                     <td className="td">
-                      <div className="font-medium text-slate-900">{e.nombres} {e.apellidos}</div>
+                      <Link href={`/empleados/${e.empleadoId}`} className="font-medium text-brand-700 hover:underline">
+                        {e.nombres} {e.apellidos}
+                      </Link>
                       {e.nit && <div className="text-xs text-slate-400">NIT {e.nit}</div>}
                     </td>
                     <td className="td">{e.establecimientoNombre}</td>
