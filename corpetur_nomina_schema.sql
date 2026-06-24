@@ -156,8 +156,9 @@ CREATE TABLE dbo.PeriodoPago (
     Mes                 TINYINT NOT NULL CHECK (Mes BETWEEN 1 AND 12),
     -- QUINCENA = pago de mitad de mes (~día 15/16).
     -- FIN_MES  = liquidación de fin de mes.
+    -- EXTRA = pago especial (propina/comisión/bono) que se paga aparte del sueldo.
     Tipo                NVARCHAR(10) NOT NULL
-                        CONSTRAINT CK_Periodo_Tipo CHECK (Tipo IN ('QUINCENA','FIN_MES')),
+                        CONSTRAINT CK_Periodo_Tipo CHECK (Tipo IN ('QUINCENA','FIN_MES','EXTRA')),
     FechaInicio         DATE NOT NULL,
     FechaFin            DATE NOT NULL,
     FechaPago           DATE NULL,

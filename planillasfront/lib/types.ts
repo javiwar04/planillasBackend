@@ -138,7 +138,7 @@ export interface EmpleadoCreate {
 }
 
 // --- Períodos ---
-export type TipoPeriodo = "QUINCENA" | "FIN_MES";
+export type TipoPeriodo = "QUINCENA" | "FIN_MES" | "EXTRA";
 export type EstadoPeriodo = "ABIERTO" | "CALCULADO" | "CERRADO";
 
 export interface Periodo {

@@ -49,8 +49,8 @@ public class PeriodosPagoController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PeriodoPagoDto>> Create(PeriodoPagoCreateDto dto)
     {
-        if (dto.Tipo is not ("QUINCENA" or "FIN_MES"))
-            return BadRequest("Tipo debe ser 'QUINCENA' o 'FIN_MES'.");
+        if (dto.Tipo is not ("QUINCENA" or "FIN_MES" or "EXTRA"))
+            return BadRequest("Tipo debe ser 'QUINCENA', 'FIN_MES' o 'EXTRA'.");
         if (dto.Mes is < 1 or > 12)
             return BadRequest("Mes debe estar entre 1 y 12.");
         if (await _db.PeriodosPago.AnyAsync(x => x.Anio == dto.Anio && x.Mes == dto.Mes && x.Tipo == dto.Tipo))

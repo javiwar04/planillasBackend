@@ -5,7 +5,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
-import { mesNombre, money } from "@/lib/format";
+import { mesNombre, money, tipoPeriodoLabel } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
 import { SkeletonRows } from "@/components/Skeleton";
 import type { Periodo, PeriodoCreate, GenerarResultado, ProvisionesResultado, Empleado } from "@/lib/types";
@@ -175,9 +175,7 @@ export default function PeriodosPage() {
                     <tr key={p.periodoPagoId} className="hover:bg-slate-50">
                       <td className="td font-medium text-slate-900">{mesNombre(p.mes)} {p.anio}</td>
                       <td className="td">
-                        <span className="badge bg-slate-100 text-slate-700">
-                          {p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}
-                        </span>
+                        <span className="badge bg-slate-100 text-slate-700">{tipoPeriodoLabel(p.tipo)}</span>
                       </td>
                       <td className="td text-slate-500">{p.fechaInicio} → {p.fechaFin}</td>
                       <td className="td">
@@ -188,11 +186,13 @@ export default function PeriodosPage() {
                           <Link href={`/periodos/${p.periodoPagoId}`} className="btn-ghost btn-sm">Ver boletas</Link>
                           {puedeOperar && p.estado !== "CERRADO" && (
                             <>
-                              <button disabled={busy}
-                                onClick={() => p.tipo === "QUINCENA" ? abrirGenerarQuincena(p) : accion(p, "generar")}
-                                className="btn-ghost btn-sm">
-                                {busy ? "…" : "Generar"}
-                              </button>
+                              {p.tipo !== "EXTRA" && (
+                                <button disabled={busy}
+                                  onClick={() => p.tipo === "QUINCENA" ? abrirGenerarQuincena(p) : accion(p, "generar")}
+                                  className="btn-ghost btn-sm">
+                                  {busy ? "…" : "Generar"}
+                                </button>
+                              )}
                               {p.tipo === "FIN_MES" && (
                                 <button disabled={busy} onClick={() => accion(p, "provisiones")} className="btn-ghost btn-sm">
                                   Provisiones
@@ -242,9 +242,10 @@ export default function PeriodosPage() {
                 <label className="col-span-2 block">
                   <span className="label">Tipo *</span>
                   <select className="input" value={form.tipo}
-                    onChange={(e) => setForm({ ...form, tipo: e.target.value as "QUINCENA" | "FIN_MES" })}>
+                    onChange={(e) => setForm({ ...form, tipo: e.target.value as "QUINCENA" | "FIN_MES" | "EXTRA" })}>
                     <option value="QUINCENA">Quincena (anticipo)</option>
                     <option value="FIN_MES">Fin de mes (liquidación)</option>
+                    <option value="EXTRA">Pago especial (propina / comisión / bono)</option>
                   </select>
                 </label>
                 <label className="block">

@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
-import { money, mesNombre } from "@/lib/format";
+import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
 import { useToast } from "@/lib/toast";
 import { IconCash } from "@/components/icons";
@@ -146,7 +146,7 @@ export default function PeriodoDetallePage() {
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              {periodo ? `${periodo.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"} · ${mesNombre(periodo.mes)} ${periodo.anio}` : "Período"}
+              {periodo ? `${tipoPeriodoLabel(periodo.tipo)} · ${mesNombre(periodo.mes)} ${periodo.anio}` : "Período"}
             </h1>
             {periodo && (
               <p className="text-sm text-slate-500">

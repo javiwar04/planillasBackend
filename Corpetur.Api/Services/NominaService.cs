@@ -53,6 +53,8 @@ public class NominaService
             ?? throw new KeyNotFoundException("Período no encontrado.");
         if (periodo.Estado == "CERRADO")
             throw new NominaException("El período está CERRADO; no se puede regenerar.", conflict: true);
+        if (periodo.Tipo is not ("QUINCENA" or "FIN_MES"))
+            throw new NominaException("Un pago especial no se genera automáticamente; usa el reparto de comisión o líneas manuales.", conflict: true);
 
         var empleados = await _db.Empleados
             .Where(e => e.Activo && e.Tipo == "PLANILLA")

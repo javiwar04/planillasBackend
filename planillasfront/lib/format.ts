@@ -7,3 +7,6 @@ export const MESES = [
 ];
 
 export const mesNombre = (m: number) => MESES[m] ?? String(m);
+
+export const tipoPeriodoLabel = (t: string) =>
+  t === "QUINCENA" ? "Quincena" : t === "FIN_MES" ? "Fin de mes" : t === "EXTRA" ? "Pago especial" : t;
