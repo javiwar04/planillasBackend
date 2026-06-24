@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -28,11 +28,10 @@ export default function PeriodoDetallePage() {
   const [boletaSel, setBoletaSel] = useState<Boleta | null>(null);
   const [repartoOpen, setRepartoOpen] = useState(false);
 
-  // Filtros y paginación
+  // Filtros y agrupación
   const [filtroEstab, setFiltroEstab] = useState(0);
   const [busqueda, setBusqueda] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const porPagina = 15;
+  const [colapsados, setColapsados] = useState<Set<string>>(new Set());
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -78,11 +77,27 @@ export default function PeriodoDetallePage() {
     });
   }, [boletas, empMap, filtroEstab, busqueda]);
 
-  const totalPaginas = Math.max(1, Math.ceil(boletasFiltradas.length / porPagina));
-  const paginaActual = Math.min(pagina, totalPaginas);
-  const visibles = boletasFiltradas.slice((paginaActual - 1) * porPagina, paginaActual * porPagina);
+  // Agrupa por establecimiento y, dentro, por departamento (como en los Excel).
+  const grupos = useMemo(() => {
+    const m = new Map<string, {
+      nombre: string; boletas: { b: BoletaLista; depto: string }[]; ing: number; egr: number; liq: number;
+    }>();
+    for (const b of boletasFiltradas) {
+      const e = empMap.get(b.empleadoId);
+      const key = e?.establecimientoNombre ?? "—";
+      if (!m.has(key)) m.set(key, { nombre: key, boletas: [], ing: 0, egr: 0, liq: 0 });
+      const g = m.get(key)!;
+      g.boletas.push({ b, depto: e?.departamentoNombre ?? "Sin departamento" });
+      g.ing += b.totalIngresos; g.egr += b.totalEgresos; g.liq += b.liquido;
+    }
+    const arr = [...m.values()].sort((a, z) => a.nombre.localeCompare(z.nombre));
+    for (const g of arr)
+      g.boletas.sort((a, z) => a.depto.localeCompare(z.depto) || a.b.empleadoNombre.localeCompare(z.b.empleadoNombre));
+    return arr;
+  }, [boletasFiltradas, empMap]);
 
-  useEffect(() => { setPagina(1); }, [filtroEstab, busqueda]);
+  const toggle = (n: string) =>
+    setColapsados((s) => { const x = new Set(s); x.has(n) ? x.delete(n) : x.add(n); return x; });
 
   const etiqueta = () => (periodo ? `${periodo.tipo}_${periodo.mes}_${periodo.anio}` : String(periodoId));
 
@@ -175,68 +190,87 @@ export default function PeriodoDetallePage() {
         </button>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-slate-200 bg-slate-50">
-              <tr>
-                <th className="th">Colaborador</th>
-                <th className="th">Establecimiento</th>
-                <th className="th text-right">Ingresos</th>
-                <th className="th text-right">Egresos</th>
-                <th className="th text-right">Líquido</th>
-                <th className="th">Estado</th>
-                <th className="th"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {cargando ? (
-                <SkeletonRows cols={7} />
-              ) : boletas.length === 0 ? (
-                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">
-                  Sin boletas. Usa “Generar” en la lista de períodos.
-                </td></tr>
-              ) : visibles.length === 0 ? (
-                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Sin coincidencias.</td></tr>
-              ) : (
-                visibles.map((b) => (
-                  <tr key={b.boletaId} className="hover:bg-slate-50">
-                    <td className="td font-medium text-slate-900">{b.empleadoNombre}</td>
-                    <td className="td text-slate-600">{empMap.get(b.empleadoId)?.establecimientoNombre ?? "—"}</td>
-                    <td className="td text-right">{money(b.totalIngresos)}</td>
-                    <td className="td text-right">{money(b.totalEgresos)}</td>
-                    <td className="td text-right font-semibold">{money(b.liquido)}</td>
-                    <td className="td"><span className="badge bg-slate-100 text-slate-600">{b.estado}</span></td>
-                    <td className="td text-right">
-                      <button onClick={() => abrirBoleta(b.boletaId)} className="font-medium text-brand-700 hover:underline">
-                        Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Planilla agrupada por establecimiento (y departamento dentro) */}
+      {cargando ? (
+        <div className="card overflow-hidden">
+          <table className="w-full"><tbody className="divide-y divide-slate-100"><SkeletonRows cols={6} /></tbody></table>
         </div>
+      ) : boletas.length === 0 ? (
+        <div className="card p-10 text-center text-slate-400">Sin boletas. Usa “Generar” en la lista de períodos.</div>
+      ) : grupos.length === 0 ? (
+        <div className="card p-10 text-center text-slate-400">Sin coincidencias.</div>
+      ) : (
+        <div className="space-y-4">
+          {grupos.map((g) => {
+            const cerradoGrupo = colapsados.has(g.nombre);
+            return (
+              <div key={g.nombre} className="card overflow-hidden">
+                <button onClick={() => toggle(g.nombre)}
+                  className="flex w-full items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3 text-left hover:bg-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-slate-400 transition ${cerradoGrupo ? "-rotate-90" : ""}`}>▾</span>
+                    <span className="font-semibold text-slate-900">{g.nombre}</span>
+                    <span className="badge bg-slate-200 text-slate-600">{g.boletas.length}</span>
+                  </div>
+                  <span className="text-sm text-slate-600">Líquido: <b className="text-slate-900">{money(g.liq)}</b></span>
+                </button>
 
-        {/* Paginación */}
-        {boletasFiltradas.length > porPagina && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm">
-            <span className="text-slate-500">
-              {(paginaActual - 1) * porPagina + 1}–{Math.min(paginaActual * porPagina, boletasFiltradas.length)} de {boletasFiltradas.length}
-            </span>
-            <div className="flex items-center gap-1">
-              <button className="btn-ghost btn-sm" disabled={paginaActual <= 1} onClick={() => setPagina(paginaActual - 1)}>
-                Anterior
-              </button>
-              <span className="px-2 text-slate-600">{paginaActual} / {totalPaginas}</span>
-              <button className="btn-ghost btn-sm" disabled={paginaActual >= totalPaginas} onClick={() => setPagina(paginaActual + 1)}>
-                Siguiente
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+                {!cerradoGrupo && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b border-slate-200 text-xs">
+                        <tr>
+                          <th className="th">Colaborador</th>
+                          <th className="th text-right">Ingresos</th>
+                          <th className="th text-right">Egresos</th>
+                          <th className="th text-right">Líquido</th>
+                          <th className="th">Estado</th>
+                          <th className="th"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {g.boletas.map(({ b, depto }, i) => {
+                          const nuevoDepto = i === 0 || g.boletas[i - 1].depto !== depto;
+                          return (
+                            <Fragment key={b.boletaId}>
+                              {nuevoDepto && (
+                                <tr className="bg-slate-50/60">
+                                  <td colSpan={6} className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {depto}
+                                  </td>
+                                </tr>
+                              )}
+                              <tr className="hover:bg-slate-50">
+                                <td className="td font-medium text-slate-900">{b.empleadoNombre}</td>
+                                <td className="td text-right">{money(b.totalIngresos)}</td>
+                                <td className="td text-right">{money(b.totalEgresos)}</td>
+                                <td className="td text-right font-semibold">{money(b.liquido)}</td>
+                                <td className="td"><span className="badge bg-slate-100 text-slate-600">{b.estado}</span></td>
+                                <td className="td text-right">
+                                  <button onClick={() => abrirBoleta(b.boletaId)} className="font-medium text-brand-700 hover:underline">Ver</button>
+                                </td>
+                              </tr>
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="border-t-2 border-slate-200 bg-slate-50">
+                        <tr>
+                          <td className="td font-semibold">Subtotal {g.nombre}</td>
+                          <td className="td text-right font-semibold">{money(g.ing)}</td>
+                          <td className="td text-right font-semibold">{money(g.egr)}</td>
+                          <td className="td text-right font-bold text-slate-900">{money(g.liq)}</td>
+                          <td className="td" colSpan={2}></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {boletaSel && (
         <BoletaModal
