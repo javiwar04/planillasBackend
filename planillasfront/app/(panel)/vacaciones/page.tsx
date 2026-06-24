@@ -157,7 +157,9 @@ export default function VacacionesPage() {
                       <td className="td">{v.fechaFin}</td>
                       <td className="td text-right font-semibold">{v.dias}</td>
                       <td className="td text-slate-600">{v.observacion ?? "—"}</td>
-                      <td className="td text-right">
+                      <td className="td text-right whitespace-nowrap">
+                        <a href={`/vacaciones/${v.vacacionId}/imprimir`} target="_blank" rel="noopener noreferrer"
+                          className="mr-3 font-medium text-brand-700 hover:underline">Imprimir</a>
                         <button onClick={() => borrar(v)} className="font-medium text-red-600 hover:underline">Eliminar</button>
                       </td>
                     </tr>
