@@ -461,48 +461,60 @@ function RepartoModal({
   onDone: (msg: string) => Promise<void>;
 }) {
   const conceptoComision = conceptos.find((c) => c.codigo === "COMISION");
-  const [establecimientoId, setEstablecimientoId] = useState(0);
   const [montoTotal, setMontoTotal] = useState("");
   const [modo, setModo] = useState<"IGUAL" | "PESO">("IGUAL");
   const [descripcion, setDescripcion] = useState("");
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [sel, setSel] = useState<Set<number>>(new Set());          // empleados elegidos
   const [pesos, setPesos] = useState<Record<number, string>>({});
+  const [filtroEstab, setFiltroEstab] = useState(0);               // filtro para encontrar gente
+  const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  // Carga empleados del establecimiento cuando se necesita modo PESO.
+  // Carga TODO el personal de planilla activo (de cualquier establecimiento).
   useEffect(() => {
-    if (!establecimientoId) { setEmpleados([]); return; }
-    api<Empleado[]>(`/empleados?establecimientoId=${establecimientoId}&tipo=PLANILLA&soloActivos=true`)
-      .then((emps) => {
-        setEmpleados(emps);
-        setPesos(Object.fromEntries(emps.map((e) => [e.empleadoId, "1"])));
-      })
+    api<Empleado[]>("/empleados?tipo=PLANILLA&soloActivos=true")
+      .then((emps) => setEmpleados(emps.sort((a, b) =>
+        (a.establecimientoNombre ?? "").localeCompare(b.establecimientoNombre ?? "") ||
+        a.apellidos.localeCompare(b.apellidos))))
       .catch(() => setEmpleados([]));
-  }, [establecimientoId]);
+  }, []);
+
+  const visibles = empleados.filter((e) => {
+    if (filtroEstab && e.establecimientoId !== filtroEstab) return false;
+    if (busqueda && !`${e.nombres} ${e.apellidos}`.toLowerCase().includes(busqueda.toLowerCase())) return false;
+    return true;
+  });
+
+  function toggle(id: number) {
+    setSel((s) => { const x = new Set(s); x.has(id) ? x.delete(id) : x.add(id); return x; });
+    setPesos((p) => ({ ...p, [id]: p[id] ?? "1" }));
+  }
+  const seleccionarVisibles = () => {
+    setSel((s) => { const x = new Set(s); visibles.forEach((e) => x.add(e.empleadoId)); return x; });
+    setPesos((p) => { const x = { ...p }; visibles.forEach((e) => { x[e.empleadoId] = x[e.empleadoId] ?? "1"; }); return x; });
+  };
+  const limpiar = () => setSel(new Set());
 
   async function repartir(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!establecimientoId || !montoTotal) { setError("Elige establecimiento y monto."); return; }
+    if (!montoTotal) { setError("Indica el monto de la bolsa."); return; }
+    if (sel.size === 0) { setError("Selecciona al menos un colaborador."); return; }
     setEnviando(true);
     try {
       const body: Record<string, unknown> = {
         periodoPagoId: periodoId,
-        establecimientoId,
+        establecimientoId: filtroEstab || null,
         montoTotal: Number(montoTotal),
         modo,
         conceptoId: conceptoComision?.conceptoId ?? null,
         descripcion: descripcion.trim() || null,
+        empleados: [...sel].map((id) => ({ empleadoId: id, peso: modo === "PESO" ? Number(pesos[id] ?? "0") : 1 })),
       };
-      if (modo === "PESO") {
-        body.empleados = empleados.map((emp) => ({
-          empleadoId: emp.empleadoId,
-          peso: Number(pesos[emp.empleadoId] ?? "0"),
-        }));
-      }
       const r = await api<RepartoResultado>("/comisiones/repartir", { method: "POST", body });
-      await onDone(`Comisión repartida: ${money(r.montoRepartido)} entre ${r.empleados} empleados.`);
+      await onDone(`Comisión repartida: ${money(r.montoRepartido)} entre ${r.empleados} colaboradores.`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo repartir.");
     } finally {
@@ -512,27 +524,16 @@ function RepartoModal({
 
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
-        <div className="mb-4 flex items-start justify-between">
+      <div className="card flex max-h-[92vh] w-full max-w-xl flex-col p-6">
+        <div className="mb-3 flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Repartir comisión</h2>
-            <p className="text-sm text-slate-500">La bolsa se reparte entre el personal del establecimiento.</p>
+            <h2 className="text-lg font-bold text-slate-900">Repartir comisión / propina</h2>
+            <p className="text-sm text-slate-500">Elige a quiénes y cómo se reparte la bolsa.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700">✕</button>
         </div>
 
-        <form onSubmit={repartir} className="space-y-3">
-          <label className="block">
-            <span className="label">Establecimiento *</span>
-            <select className="input" value={establecimientoId}
-              onChange={(e) => setEstablecimientoId(Number(e.target.value))}>
-              <option value={0}>Seleccione…</option>
-              {establecimientos.map((es) => (
-                <option key={es.establecimientoId} value={es.establecimientoId}>{es.nombre}</option>
-              ))}
-            </select>
-          </label>
-
+        <form onSubmit={repartir} className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="label">Monto total (bolsa) *</span>
@@ -554,35 +555,45 @@ function RepartoModal({
               placeholder="(opcional)" />
           </label>
 
-          {modo === "IGUAL" && establecimientoId > 0 && (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Se reparte en partes iguales entre los <b>{empleados.length}</b> empleados de planilla activos del establecimiento.
-            </p>
-          )}
+          {/* Selección de colaboradores */}
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="input max-w-[14rem]" value={filtroEstab} onChange={(e) => setFiltroEstab(Number(e.target.value))}>
+              <option value={0}>Todos los establecimientos</option>
+              {establecimientos.map((es) => (
+                <option key={es.establecimientoId} value={es.establecimientoId}>{es.nombre}</option>
+              ))}
+            </select>
+            <input className="input max-w-[12rem]" placeholder="Buscar…" value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)} />
+            <button type="button" onClick={seleccionarVisibles} className="btn-ghost btn-sm">Seleccionar visibles</button>
+            <button type="button" onClick={limpiar} className="btn-ghost btn-sm">Limpiar</button>
+            <span className="ml-auto text-sm font-medium text-brand-700">{sel.size} elegidos</span>
+          </div>
 
-          {modo === "PESO" && (
-            <div className="rounded-xl border border-slate-200">
-              <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase text-slate-500">
-                Pesos por empleado
-              </div>
-              <div className="max-h-52 overflow-y-auto">
-                {empleados.length === 0 ? (
-                  <p className="px-3 py-3 text-sm text-slate-400">Elige un establecimiento.</p>
-                ) : empleados.map((emp) => (
-                  <div key={emp.empleadoId} className="flex items-center justify-between gap-3 border-b border-slate-50 px-3 py-2">
-                    <span className="text-sm text-slate-700">{emp.nombres} {emp.apellidos}</span>
-                    <input type="number" step="0.01" min="0" className="input w-24 py-1"
-                      value={pesos[emp.empleadoId] ?? ""}
-                      onChange={(e) => setPesos({ ...pesos, [emp.empleadoId]: e.target.value })} />
+          <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200">
+            {visibles.length === 0 ? (
+              <p className="px-3 py-4 text-sm text-slate-400">Sin colaboradores.</p>
+            ) : visibles.map((emp) => {
+              const elegido = sel.has(emp.empleadoId);
+              return (
+                <div key={emp.empleadoId} className="flex items-center gap-3 border-b border-slate-50 px-3 py-2">
+                  <input type="checkbox" checked={elegido} onChange={() => toggle(emp.empleadoId)} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm text-slate-800">{emp.nombres} {emp.apellidos}</div>
+                    <div className="text-xs text-slate-400">{emp.establecimientoNombre}</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  {modo === "PESO" && elegido && (
+                    <input type="number" step="0.01" min="0" className="input w-20 py-1" value={pesos[emp.empleadoId] ?? "1"}
+                      onChange={(e) => setPesos({ ...pesos, [emp.empleadoId]: e.target.value })} title="Peso" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="btn-ghost">Cancelar</button>
             <button type="submit" disabled={enviando} className="btn-primary">
               {enviando ? "Repartiendo…" : "Repartir"}

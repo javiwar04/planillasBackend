@@ -164,7 +164,7 @@ public record ProvisionesResultadoDto(int Anio, int Mes, int Generadas, int Actu
 public record RepartoItemDto(int EmpleadoId, decimal? Peso);
 public record RepartoComisionRequest(
     int PeriodoPagoId,
-    int EstablecimientoId,
+    int? EstablecimientoId,      // opcional si se manda lista de empleados (pueden ser de varios)
     decimal MontoTotal,
     string Modo,                 // IGUAL | PESO
     int? ConceptoId,             // default: concepto COMISION

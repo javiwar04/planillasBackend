@@ -150,8 +150,12 @@ public class NominaService
         if (periodo.Estado == "CERRADO")
             throw new NominaException("El período está CERRADO; no se puede repartir comisión.", conflict: true);
 
-        var estab = await _db.Establecimientos.FindAsync(req.EstablecimientoId)
-            ?? throw new KeyNotFoundException("Establecimiento no encontrado.");
+        // El establecimiento es opcional cuando se manda una lista explícita de empleados
+        // (puede haber gente de varios establecimientos, p. ej. restaurante + administración).
+        Establecimiento? estab = req.EstablecimientoId is not null
+            ? await _db.Establecimientos.FindAsync(req.EstablecimientoId.Value)
+                ?? throw new KeyNotFoundException("Establecimiento no encontrado.")
+            : null;
 
         var concepto = req.ConceptoId is not null
             ? await _db.Conceptos.FindAsync(req.ConceptoId.Value)
@@ -178,6 +182,8 @@ public class NominaService
         }
         else
         {
+            if (req.EstablecimientoId is null)
+                throw new NominaException("Indica un establecimiento o una lista de empleados.");
             var emps = await _db.Empleados
                 .Where(e => e.Activo && e.Tipo == "PLANILLA" && e.EstablecimientoId == req.EstablecimientoId)
                 .OrderBy(e => e.Apellidos).ThenBy(e => e.Nombres)
@@ -193,7 +199,7 @@ public class NominaService
         if (sumaPesos <= 0) throw new NominaException("La suma de pesos debe ser mayor a cero.");
 
         var desc = string.IsNullOrWhiteSpace(req.Descripcion)
-            ? $"Comisión {periodo.Mes}/{periodo.Anio} - {estab.Nombre}"
+            ? (estab is not null ? $"Comisión {periodo.Mes}/{periodo.Anio} - {estab.Nombre}" : $"Comisión {periodo.Mes}/{periodo.Anio}")
             : req.Descripcion!.Trim();
 
         // Calcular montos con redondeo a 2 decimales; el último absorbe el residuo
