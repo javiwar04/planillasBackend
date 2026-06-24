@@ -316,27 +316,40 @@ function BoletaModal({
 }) {
   const toast = useToast();
   const editable = !cerrado && boleta.estado !== "PAGADA";
+  // Líneas que genera/regenera el motor: no se editan a mano (se recalculan).
+  const BLOQUEADAS = ["SUELDO", "IGSS", "ANTICIPO", "ANT_QUINCENA"];
   const [conceptoId, setConceptoId] = useState(0);
   const [monto, setMonto] = useState("");
   const [desc, setDesc] = useState("");
+  const [editId, setEditId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
-  async function agregar(e: React.FormEvent) {
+  function editar(d: Boleta["detalles"][number]) {
+    setEditId(d.boletaDetalleId);
+    setConceptoId(d.conceptoId);
+    setMonto(String(d.monto));
+    setDesc(d.descripcion ?? "");
+    setError(null);
+  }
+  function cancelarEdicion() {
+    setEditId(null); setConceptoId(0); setMonto(""); setDesc("");
+  }
+
+  async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!conceptoId || !monto) { setError("Elige concepto y monto."); return; }
     setGuardando(true);
     try {
-      await api(`/boletas/${boleta.boletaId}/lineas`, {
-        method: "POST",
-        body: { conceptoId, monto: Number(monto), descripcion: desc.trim() || null },
-      });
-      setConceptoId(0); setMonto(""); setDesc("");
-      toast.success("Línea agregada.");
+      const body = { conceptoId, monto: Number(monto), descripcion: desc.trim() || null };
+      if (editId) await api(`/boletas/${boleta.boletaId}/lineas/${editId}`, { method: "PUT", body });
+      else await api(`/boletas/${boleta.boletaId}/lineas`, { method: "POST", body });
+      setEditId(null); setConceptoId(0); setMonto(""); setDesc("");
+      toast.success(editId ? "Línea actualizada." : "Línea agregada.");
       await onChange();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo agregar la línea.");
+      setError(err instanceof ApiError ? err.message : "No se pudo guardar la línea.");
     } finally {
       setGuardando(false);
     }
@@ -388,13 +401,15 @@ function BoletaModal({
                 </td>
                 <td className="td text-right text-brand-700">{d.naturaleza === "INGRESO" ? money(d.monto) : ""}</td>
                 <td className="td text-right text-red-600">{d.naturaleza === "EGRESO" ? money(d.monto) : ""}</td>
-                <td className="td text-right">
-                  {editable && !d.esCalculado && (
-                    <button onClick={() => borrar(d.boletaDetalleId)} className="text-xs font-medium text-red-600 hover:underline">
-                      Quitar
-                    </button>
-                  )}
-                  {d.esCalculado && <span className="text-xs text-slate-400">auto</span>}
+                <td className="td text-right whitespace-nowrap">
+                  {BLOQUEADAS.includes(d.conceptoCodigo) ? (
+                    <span className="text-xs text-slate-400">auto</span>
+                  ) : editable ? (
+                    <>
+                      <button onClick={() => editar(d)} className="mr-2 text-xs font-medium text-brand-700 hover:underline">Editar</button>
+                      <button onClick={() => borrar(d.boletaDetalleId)} className="text-xs font-medium text-red-600 hover:underline">Quitar</button>
+                    </>
+                  ) : null}
                 </td>
               </tr>
             ))}
@@ -410,8 +425,10 @@ function BoletaModal({
         </table>
 
         {editable ? (
-          <form onSubmit={agregar} className="mt-5 rounded-xl bg-slate-50 p-4">
-            <div className="mb-1 text-sm font-semibold text-slate-700">Agregar línea manual</div>
+          <form onSubmit={guardar} className="mt-5 rounded-xl bg-slate-50 p-4">
+            <div className="mb-1 text-sm font-semibold text-slate-700">
+              {editId ? "Editar línea" : "Agregar línea manual"}
+            </div>
             <p className="mb-3 text-xs text-slate-500">Comisión, ISR, bonificación, préstamos, descuentos…</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-12">
               <select className="input sm:col-span-5" value={conceptoId}
@@ -434,9 +451,12 @@ function BoletaModal({
                 value={desc} onChange={(e) => setDesc(e.target.value)} />
             </div>
             {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex justify-end gap-2">
+              {editId && (
+                <button type="button" onClick={cancelarEdicion} className="btn-ghost btn-sm">Cancelar</button>
+              )}
               <button type="submit" disabled={guardando} className="btn-primary btn-sm">
-                {guardando ? "Agregando…" : "Agregar línea"}
+                {guardando ? "Guardando…" : editId ? "Guardar cambios" : "Agregar línea"}
               </button>
             </div>
           </form>
