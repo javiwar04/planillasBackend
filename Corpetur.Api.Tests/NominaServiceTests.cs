@@ -239,4 +239,81 @@ public class NominaServiceTests
             new RepartoComisionRequest(1, 1, 5000, "IGUAL", null, null, null)));
         Assert.True(ex.Conflict);
     }
+
+    // ---- El reparto deja la boleta en CALCULADA (no BORRADOR) ----
+    [Fact]
+    public async Task Reparto_dejaBoletaCalculada()
+    {
+        using var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "MESON", Nombre = "Mesón" });
+        db.SaveChanges();
+        SembrarConceptos(db);
+        var e1 = Empleado(1);
+        db.Empleados.Add(e1);
+        db.PeriodosPago.Add(new PeriodoPago { PeriodoPagoId = 1, Anio = 2026, Mes = 6, Tipo = "EXTRA",
+            FechaInicio = new(2026, 7, 1), FechaFin = new(2026, 7, 7), Estado = "ABIERTO" });
+        db.SaveChanges();
+
+        var svc = new NominaService(db);
+        await svc.RepartirComisionAsync(new RepartoComisionRequest(
+            1, null, 1000, "IGUAL", null, null,
+            new List<RepartoItemDto> { new(e1.EmpleadoId, null) }));
+
+        var b = await db.Boletas.FirstAsync(x => x.EmpleadoId == e1.EmpleadoId);
+        Assert.Equal("CALCULADA", b.Estado);
+    }
+
+    // ---- Cerrar período: validaciones ----
+    private static (CorpeturDbContext db, NominaService svc) ContextoFinMes(out Empleado emp, string estadoBoleta = "CALCULADA")
+    {
+        var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "ISLA", Nombre = "Isla" });
+        emp = Empleado(1);
+        db.Empleados.Add(emp);
+        db.PeriodosPago.Add(new PeriodoPago { PeriodoPagoId = 1, Anio = 2026, Mes = 6, Tipo = "FIN_MES",
+            FechaInicio = new(2026, 6, 16), FechaFin = new(2026, 6, 30), Estado = "CALCULADO" });
+        db.SaveChanges();
+        db.Boletas.Add(new Boleta { EmpleadoId = emp.EmpleadoId, PeriodoPagoId = 1, Estado = estadoBoleta });
+        db.SaveChanges();
+        return (db, new NominaService(db));
+    }
+
+    [Fact]
+    public async Task Cerrar_correcto_marcaPagadaYCerrado()
+    {
+        var (db, svc) = ContextoFinMes(out _);
+        using (db)
+        {
+            await svc.CerrarAsync(1);
+            var per = await db.PeriodosPago.FindAsync(1);
+            Assert.Equal("CERRADO", per!.Estado);
+            Assert.NotNull(per.FechaPago);
+            Assert.All(await db.Boletas.ToListAsync(), b => Assert.Equal("PAGADA", b.Estado));
+        }
+    }
+
+    [Fact]
+    public async Task Cerrar_conBorrador_lanzaConflicto()
+    {
+        var (db, svc) = ContextoFinMes(out _, estadoBoleta: "BORRADOR");
+        using (db)
+        {
+            var ex = await Assert.ThrowsAsync<NominaException>(() => svc.CerrarAsync(1));
+            Assert.True(ex.Conflict);
+        }
+    }
+
+    [Fact]
+    public async Task Cerrar_conColaboradorSinBoleta_lanzaConflicto()
+    {
+        var (db, svc) = ContextoFinMes(out _);
+        using (db)
+        {
+            // Un segundo colaborador de planilla SIN boleta en el período.
+            db.Empleados.Add(Empleado(1));
+            db.SaveChanges();
+            var ex = await Assert.ThrowsAsync<NominaException>(() => svc.CerrarAsync(1));
+            Assert.True(ex.Conflict);
+        }
+    }
 }

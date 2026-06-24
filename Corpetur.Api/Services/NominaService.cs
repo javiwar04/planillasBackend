@@ -219,6 +219,7 @@ public class NominaService
             QuitarLineas(boleta, d => d.ConceptoId == concepto.ConceptoId && d.Descripcion == desc);
             AgregarLinea(boleta, concepto, monto, desc);
             RecalcularTotales(boleta);
+            if (boleta.Estado == "BORRADOR") boleta.Estado = "CALCULADA";
             boleta.ActualizadoEn = DateTime.UtcNow;
 
             resultado.Add(new RepartoResultadoItemDto(emp.EmpleadoId, $"{emp.Nombres} {emp.Apellidos}", monto));
@@ -289,6 +290,24 @@ public class NominaService
             ?? throw new KeyNotFoundException("Período no encontrado.");
         if (periodo.Estado == "CERRADO")
             throw new NominaException("El período ya está CERRADO.", conflict: true);
+
+        // Validaciones de cierre: no cerrar incompleto.
+        if (periodo.Boletas.Count == 0)
+            throw new NominaException("El período no tiene boletas que cerrar.", conflict: true);
+
+        var borradores = periodo.Boletas.Count(b => b.Estado == "BORRADOR");
+        if (borradores > 0)
+            throw new NominaException($"Hay {borradores} boleta(s) en BORRADOR. Genera o calcula antes de cerrar.", conflict: true);
+
+        // En quincena/fin de mes deben estar TODOS los de planilla activos.
+        if (periodo.Tipo is "QUINCENA" or "FIN_MES")
+        {
+            var conBoleta = periodo.Boletas.Select(b => b.EmpleadoId).ToHashSet();
+            var faltan = await _db.Empleados
+                .CountAsync(e => e.Activo && e.Tipo == "PLANILLA" && !conBoleta.Contains(e.EmpleadoId));
+            if (faltan > 0)
+                throw new NominaException($"Faltan {faltan} colaborador(es) de planilla sin boleta. Vuelve a generar el período antes de cerrar.", conflict: true);
+        }
 
         foreach (var b in periodo.Boletas) b.Estado = "PAGADA";
         periodo.Estado = "CERRADO";
