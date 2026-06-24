@@ -333,6 +333,7 @@ function BoletaModal({
         body: { conceptoId, monto: Number(monto), descripcion: desc.trim() || null },
       });
       setConceptoId(0); setMonto(""); setDesc("");
+      toast.success("Línea agregada.");
       await onChange();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo agregar la línea.");

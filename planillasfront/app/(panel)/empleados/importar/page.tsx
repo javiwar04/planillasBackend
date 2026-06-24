@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import type { Establecimiento, Departamento, EmpleadoCreate } from "@/lib/types";
 
@@ -39,6 +40,7 @@ type Fila = {
 };
 
 export default function ImportarEmpleadosPage() {
+  const toast = useToast();
   const [establecimientos, setEstablecimientos] = useState<Establecimiento[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<{ puestoId: number; nombre: string }[]>([]);
@@ -178,6 +180,8 @@ export default function ImportarEmpleadosPage() {
     setPuestos(puList.map((p) => ({ puestoId: p.id, nombre: p.nombre })));
     setFilas(actualizadas);
     setResumen(`Importación terminada: ${ok} creados, ${fail} con error.`);
+    if (ok > 0) toast.success(`${ok} colaboradores importados.`);
+    if (fail > 0) toast.error(`${fail} filas con error.`);
     setImportando(false);
   }
 

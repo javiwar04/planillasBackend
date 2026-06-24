@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { money, mesNombre } from "@/lib/format";
 import type { Prestamo, PrestamoMovimiento, Periodo } from "@/lib/types";
 
 const hoy = new Date().toISOString().slice(0, 10);
 
 export default function PrestamoDetallePage() {
+  const toast = useToast();
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
 
@@ -87,9 +89,10 @@ export default function PrestamoDetallePage() {
         },
       });
       setMonto(""); setSaldoResultante(""); setPeriodoId(0);
+      toast.success("Movimiento registrado.");
       await cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo registrar el movimiento.");
+      toast.error(err instanceof ApiError ? err.message : "No se pudo registrar el movimiento.");
     } finally {
       setGuardando(false);
     }
