@@ -110,6 +110,13 @@ export default function PeriodosPage() {
     }
   }
 
+  // Generar con aviso si el período ya estaba calculado (para no sobreescribir sin querer).
+  function iniciarGenerar(p: Periodo) {
+    if (p.estado === "CALCULADO" &&
+        !confirm("Este período ya fue generado. Regenerar recalculará las líneas automáticas (sueldo, IGSS, anticipo) y conserva las manuales. ¿Continuar?")) return;
+    if (p.tipo === "QUINCENA") abrirGenerarQuincena(p); else accion(p, "generar");
+  }
+
   async function accion(p: Periodo, tipo: "generar" | "provisiones" | "cerrar" | "reabrir") {
     if (tipo === "cerrar" && !confirm(`¿Cerrar el período ${p.tipo} ${mesNombre(p.mes)} ${p.anio}? Ya no se podrá editar.`)) return;
     if (tipo === "reabrir" && !confirm(`¿Reabrir el período ${p.tipo} ${mesNombre(p.mes)} ${p.anio}? Las boletas volverán a CALCULADA para corregir.`)) return;
@@ -187,9 +194,7 @@ export default function PeriodosPage() {
                           {puedeOperar && p.estado !== "CERRADO" && (
                             <>
                               {p.tipo !== "EXTRA" && (
-                                <button disabled={busy}
-                                  onClick={() => p.tipo === "QUINCENA" ? abrirGenerarQuincena(p) : accion(p, "generar")}
-                                  className="btn-ghost btn-sm">
+                                <button disabled={busy} onClick={() => iniciarGenerar(p)} className="btn-ghost btn-sm">
                                   {busy ? "…" : "Generar"}
                                 </button>
                               )}
