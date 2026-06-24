@@ -155,9 +155,9 @@ export default function PeriodoDetallePage() {
               </p>
             )}
           </div>
-          {!cerrado && (
+          {!cerrado && periodo?.tipo === "EXTRA" && (
             <button onClick={() => setRepartoOpen(true)} className="btn-primary">
-              <IconCash className="h-4 w-4" /> Repartir comisión
+              <IconCash className="h-4 w-4" /> Repartir comisión / propina
             </button>
           )}
         </div>
