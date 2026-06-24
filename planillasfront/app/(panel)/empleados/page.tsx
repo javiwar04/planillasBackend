@@ -223,6 +223,8 @@ export default function EmpleadosPage() {
                     <td className="td text-right whitespace-nowrap">
                       <button onClick={() => abrirEditar(e)} className="mr-3 font-medium text-brand-700 hover:underline">Editar</button>
                       <button onClick={() => abrirTraslado(e)} className="mr-3 font-medium text-slate-600 hover:underline">Traslado</button>
+                      <a href={`/empleados/${e.empleadoId}/constancia`} target="_blank" rel="noopener noreferrer"
+                        className="mr-3 font-medium text-slate-600 hover:underline">Constancia</a>
                       <button onClick={() => darDeBaja(e)} className="font-medium text-red-600 hover:underline">Baja</button>
                     </td>
                   </tr>
