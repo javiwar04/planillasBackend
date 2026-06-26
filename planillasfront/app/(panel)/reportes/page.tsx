@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
-import { PlanillaIGSS, LibroSalarios } from "@/components/ReportesLegales";
+import { PlanillaIGSS, LibroSalarios, DeclaracionAnualReporte } from "@/components/ReportesLegales";
 import type { Empleado, BoletaLista, Periodo, ProvisionLaboral } from "@/lib/types";
 
-type Tab = "historico" | "pasivo" | "igss" | "libro";
+type Tab = "historico" | "pasivo" | "igss" | "libro" | "declaracion";
 
 export default function ReportesPage() {
   const [tab, setTab] = useState<Tab>("historico");
@@ -16,7 +16,7 @@ export default function ReportesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Reportes</h1>
-        <p className="text-sm text-slate-500">Histórico, pasivo laboral, planilla IGSS y libro de salarios.</p>
+        <p className="text-sm text-slate-500">Histórico, pasivo laboral, planilla IGSS, libro de salarios y declaración anual.</p>
       </div>
 
       <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1 w-fit">
@@ -24,12 +24,14 @@ export default function ReportesPage() {
         <TabBtn activo={tab === "pasivo"} onClick={() => setTab("pasivo")}>Pasivo laboral</TabBtn>
         <TabBtn activo={tab === "igss"} onClick={() => setTab("igss")}>Planilla IGSS</TabBtn>
         <TabBtn activo={tab === "libro"} onClick={() => setTab("libro")}>Libro de salarios</TabBtn>
+        <TabBtn activo={tab === "declaracion"} onClick={() => setTab("declaracion")}>Declaración anual</TabBtn>
       </div>
 
       {tab === "historico" && <Historico />}
       {tab === "pasivo" && <Pasivo />}
       {tab === "igss" && <PlanillaIGSS />}
       {tab === "libro" && <LibroSalarios />}
+      {tab === "declaracion" && <DeclaracionAnualReporte />}
     </div>
   );
 }

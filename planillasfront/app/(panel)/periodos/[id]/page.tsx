@@ -188,6 +188,10 @@ export default function PeriodoDetallePage() {
         <button onClick={exportarBanco} disabled={boletasFiltradas.length === 0} className="btn-ghost btn-sm">
           Archivo de pago al banco
         </button>
+        <a href={`/periodos/${periodoId}/banco/imprimir${filtroEstab ? `?est=${filtroEstab}` : ""}`}
+          target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
+          Carta al banco
+        </a>
         <a href={`/periodos/${periodoId}/boletas/imprimir${filtroEstab ? `?est=${filtroEstab}` : ""}`}
           target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
           Imprimir boletas

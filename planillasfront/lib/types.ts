@@ -249,6 +249,24 @@ export interface PrestamoMovimiento {
   saldoResultante: number;
 }
 
+// --- Declaración jurada anual (SAT) ---
+export interface DeclaracionAnual {
+  empleadoId: number;
+  nombre: string;
+  nit?: string | null;
+  establecimiento?: string | null;
+  sueldos: number;
+  horasExtras: number;
+  bonoDecreto: number;
+  otrasBonificaciones: number;
+  comisiones: number;
+  propinas: number;
+  aguinaldo: number;
+  bono14: number;
+  otrosIngresos: number;
+  igssLaboral: number;
+}
+
 // --- Pasivo laboral (cuadro Kurt) ---
 export interface ProvisionLaboral {
   provisionLaboralId: number;

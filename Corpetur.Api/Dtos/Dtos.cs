@@ -43,6 +43,25 @@ public record EmpleadoCreateDto(
     string? CuentaBanco,
     DateOnly? FechaIngreso);
 
+// --- Reportes ---
+// Una fila de la Declaración Jurada Anual (formato SAT): acumulado del año por
+// colaborador de PLANILLA, separando cada tipo de ingreso en su casilla.
+public record DeclaracionAnualDto(
+    int EmpleadoId,
+    string Nombre,
+    string? Nit,
+    string? Establecimiento,
+    decimal Sueldos,
+    decimal HorasExtras,
+    decimal BonoDecreto,
+    decimal OtrasBonificaciones,
+    decimal Comisiones,
+    decimal Propinas,
+    decimal Aguinaldo,
+    decimal Bono14,
+    decimal OtrosIngresos,
+    decimal IgssLaboral);
+
 // --- Traslados / movimientos de empleado ---
 public record TrasladoRequest(DateOnly Fecha, int? EstablecimientoId, int? DepartamentoId, int? PuestoId,
     decimal? SueldoBase, string? Motivo);
