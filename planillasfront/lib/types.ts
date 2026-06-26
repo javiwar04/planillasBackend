@@ -263,6 +263,10 @@ export interface DeclaracionAnual {
   propinas: number;
   aguinaldo: number;
   bono14: number;
+  viaticos: number;
+  gastoRepresentacion: number;
+  dietas: number;
+  gratificaciones: number;
   otrosIngresos: number;
   igssLaboral: number;
 }

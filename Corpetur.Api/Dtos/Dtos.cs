@@ -59,6 +59,10 @@ public record DeclaracionAnualDto(
     decimal Propinas,
     decimal Aguinaldo,
     decimal Bono14,
+    decimal Viaticos,
+    decimal GastoRepresentacion,
+    decimal Dietas,
+    decimal Gratificaciones,
     decimal OtrosIngresos,
     decimal IgssLaboral);
 

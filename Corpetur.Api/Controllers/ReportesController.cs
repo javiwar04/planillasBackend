@@ -56,14 +56,28 @@ public class ReportesController : ControllerBase
                 var propinas = Sum(c => c.Contains("PROPINA"));
                 var aguinaldo = Sum(c => c.Contains("AGUINALDO"));
                 var bono14 = Sum(c => c.Contains("BONO14") || c.Contains("BONO_14"));
+                var viaticos = Sum(c => c == "VIATICOS");
+                var gastoRep = Sum(c => c == "GASTO_REP");
+                var dietas = Sum(c => c == "DIETAS");
+                var gratific = Sum(c => c == "GRATIFIC");
                 var igss = Sum(c => c == "IGSS");
 
+                // Conceptos que NO son ingreso declarable aunque estén como INGRESO:
+                // el anticipo de quincena es solo un adelanto del sueldo (ya contado en
+                // SUELDO del fin de mes); contarlo otra vez infla la declaración.
+                var noDeclarables = new HashSet<string> { "ANT_QUINCENA" };
+
                 // Lo demás de naturaleza INGRESO que no encajó en una casilla.
-                var clasificados = new HashSet<string> { "SUELDO", "HORAS_EXTRA", "BONO_INC", "BONO_OTRO", "COMISION" };
+                var clasificados = new HashSet<string>
+                {
+                    "SUELDO", "HORAS_EXTRA", "BONO_INC", "BONO_OTRO", "COMISION",
+                    "VIATICOS", "GASTO_REP", "DIETAS", "GRATIFIC",
+                };
                 var otros = g.Where(x =>
                 {
                     var c = x.Codigo.ToUpperInvariant();
                     if (x.Naturaleza != "INGRESO") return false;
+                    if (noDeclarables.Contains(c)) return false;
                     if (clasificados.Contains(c)) return false;
                     if (c.Contains("PROPINA") || c.Contains("AGUINALDO") || c.Contains("BONO14") || c.Contains("BONO_14")) return false;
                     return true;
@@ -72,7 +86,7 @@ public class ReportesController : ControllerBase
                 return new DeclaracionAnualDto(
                     g.Key, first.Nombre, first.Nit, first.Establecimiento,
                     sueldos, horas, bonoDecreto, otrasBon, comisiones, propinas,
-                    aguinaldo, bono14, otros, igss);
+                    aguinaldo, bono14, viaticos, gastoRep, dietas, gratific, otros, igss);
             })
             .OrderBy(f => f.Nombre)
             .ToList();

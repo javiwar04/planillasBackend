@@ -145,8 +145,8 @@ function filaSat(f: DeclaracionAnual): (string | number)[] {
   const n = (v: number) => (v ? Math.round(v * 100) / 100 : "");
   return [
     f.nit ?? "", n(f.sueldos), n(f.horasExtras), n(f.bonoDecreto), n(f.otrasBonificaciones),
-    n(f.comisiones), n(f.propinas), n(f.aguinaldo), n(f.bono14), "",
-    "", "", "", "", "",
+    n(f.comisiones), n(f.propinas), n(f.aguinaldo), n(f.bono14), n(f.viaticos),
+    n(f.gastoRepresentacion), n(f.dietas), n(f.gratificaciones), "", "",
     n(f.otrosIngresos), "", "",
     "", "",
     n(f.aguinaldo), n(f.bono14), "",

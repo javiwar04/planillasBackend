@@ -357,12 +357,22 @@ INSERT INTO dbo.Establecimiento (Codigo, Nombre, EsEntidadContable) VALUES
  (N'TOTAL_PT',  N'Total Petén (Agencia)',      0);   -- agencia de viajes, personal propio
 
 -- Conceptos: INGRESOS
+-- Los códigos alimentan las casillas de la Declaración Jurada Anual (SAT). Los de
+-- uso excepcional (viáticos, dietas, gratificaciones, gasto de representación) se
+-- siembran para que existan si alguna vez se capturan, aunque normalmente vayan en 0.
 INSERT INTO dbo.Concepto (Codigo, Nombre, Naturaleza, EsCalculado, Orden) VALUES
  (N'SUELDO',        N'Sueldo base',                        N'INGRESO', 0, 10),
  (N'BONO_INC',      N'Bonificación incentivo Dto. 37-2001',N'INGRESO', 0, 20),
  (N'BONO_OTRO',     N'Otras bonificaciones',               N'INGRESO', 0, 30),
  (N'COMISION',      N'Comisión sobre venta',               N'INGRESO', 1, 40),
  (N'HORAS_EXTRA',   N'Horas extras',                       N'INGRESO', 0, 50),
+ (N'PROPINA',       N'Propinas',                           N'INGRESO', 0, 55),
+ (N'AGUINALDO',     N'Aguinaldo',                          N'INGRESO', 0, 70),
+ (N'BONO14',        N'Bono 14 (bono anual)',               N'INGRESO', 0, 75),
+ (N'VIATICOS',      N'Viáticos',                           N'INGRESO', 0, 80),
+ (N'GASTO_REP',     N'Gasto de representación',            N'INGRESO', 0, 82),
+ (N'DIETAS',        N'Dietas',                             N'INGRESO', 0, 84),
+ (N'GRATIFIC',      N'Gratificaciones',                    N'INGRESO', 0, 86),
  (N'OTRO_INGRESO',  N'Otros ingresos',                     N'INGRESO', 0, 60);
 
 -- Conceptos: EGRESOS / DESCUENTOS
