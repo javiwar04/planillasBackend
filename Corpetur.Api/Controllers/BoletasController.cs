@@ -14,6 +14,11 @@ public class BoletasController : ControllerBase
     private readonly CorpeturDbContext _db;
     public BoletasController(CorpeturDbContext db) => _db = db;
 
+    private static readonly HashSet<string> PrestacionesLegales = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AGUINALDO", "BONO14", "BONO_14"
+    };
+
     // GET /api/boletas?periodoId=3&empleadoId=5
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BoletaListDto>>> GetAll(
@@ -48,6 +53,8 @@ public class BoletasController : ControllerBase
 
         var concepto = await _db.Conceptos.FindAsync(dto.ConceptoId);
         if (concepto is null) return BadRequest("El concepto no existe.");
+        if (PrestacionesLegales.Contains(concepto.Codigo))
+            return BadRequest("Aguinaldo y Bono 14 se emiten desde su módulo, no como línea manual.");
 
         var linea = new BoletaDetalle
         {
@@ -69,9 +76,13 @@ public class BoletasController : ControllerBase
 
         var linea = b.Detalles.FirstOrDefault(d => d.BoletaDetalleId == detalleId);
         if (linea is null) return NotFound("La línea no existe en esta boleta.");
+        if (linea.Concepto is not null && PrestacionesLegales.Contains(linea.Concepto.Codigo))
+            return BadRequest("Aguinaldo y Bono 14 se emiten desde su módulo, no como línea manual.");
 
         var concepto = await _db.Conceptos.FindAsync(dto.ConceptoId);
         if (concepto is null) return BadRequest("El concepto no existe.");
+        if (PrestacionesLegales.Contains(concepto.Codigo))
+            return BadRequest("Aguinaldo y Bono 14 se emiten desde su módulo, no como línea manual.");
 
         linea.ConceptoId = concepto.ConceptoId; linea.Concepto = concepto;
         linea.Monto = dto.Monto; linea.Descripcion = dto.Descripcion;
@@ -89,6 +100,8 @@ public class BoletasController : ControllerBase
 
         var linea = b.Detalles.FirstOrDefault(d => d.BoletaDetalleId == detalleId);
         if (linea is null) return NotFound("La línea no existe en esta boleta.");
+        if (linea.Concepto is not null && PrestacionesLegales.Contains(linea.Concepto.Codigo))
+            return BadRequest("Aguinaldo y Bono 14 se emiten desde su módulo, no como línea manual.");
 
         b.Detalles.Remove(linea);
         _db.BoletaDetalles.Remove(linea);

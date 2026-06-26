@@ -7,13 +7,17 @@ import { money, tipoPeriodoLabel } from "@/lib/format";
 import type { Periodo, BoletaLista, Empleado } from "@/lib/types";
 
 // Carta de acreditamiento al banco (formato CORPETUR). Una carta por
-// establecimiento: lista nombre, monto líquido y número de cuenta del colaborador,
-// y debita el total de la cuenta del establecimiento. Los datos de cabecera
-// (cuenta de la empresa, agencia, firmante, etc.) se editan y se recuerdan por
-// establecimiento en el navegador, para no quemarlos en código ni en la BD.
+// establecimiento: lista nombre, monto líquido y número de cuenta del colaborador.
+// La cuenta a debitar y la firma quedan fijas según el formato aprobado; el resto
+// de datos de cabecera se edita y se recuerda por establecimiento en el navegador.
 
 const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+const CUENTA_EMPRESA = "3-017-15163-5";
+const TITULAR_CUENTA = "HOTEL CASONA DEL LAGO Y/O CORPETURSA";
+const FIRMANTE = "Oscar A. Mateo Najera";
+const CARGO_FIRMA = "HOTEL PETEN";
 
 interface DatosCarta {
   ciudad: string;
@@ -31,11 +35,21 @@ function datosDefault(estabNombre: string, fechaPago?: string | null): DatosCart
     ciudad: "Flores, Petén",
     banco: "Banrural",
     ubicacionAgencia: "San Benito, Petén",
-    cuentaEmpresa: "",
-    titular: `${estabNombre} Y/O CORPETURSA`.toUpperCase(),
-    firmante: "",
-    cargo: estabNombre.toUpperCase(),
+    cuentaEmpresa: CUENTA_EMPRESA,
+    titular: TITULAR_CUENTA,
+    firmante: FIRMANTE,
+    cargo: CARGO_FIRMA,
     fecha: fechaPago ?? new Date().toISOString().slice(0, 10),
+  };
+}
+
+function aplicarDatosFijos(d: DatosCarta): DatosCarta {
+  return {
+    ...d,
+    cuentaEmpresa: CUENTA_EMPRESA,
+    titular: TITULAR_CUENTA,
+    firmante: FIRMANTE,
+    cargo: CARGO_FIRMA,
   };
 }
 
@@ -98,7 +112,7 @@ export default function CartaBancoPage() {
         const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
         if (raw) d = { ...d, ...JSON.parse(raw), fecha: per.fechaPago ?? d.fecha };
       } catch { /* ignora json inválido */ }
-      setDatos(d);
+      setDatos(aplicarDatosFijos(d));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar la carta.");
     } finally {
@@ -109,8 +123,9 @@ export default function CartaBancoPage() {
   useEffect(() => { cargar(); }, [cargar]);
 
   function guardarDatos(d: DatosCarta) {
-    setDatos(d);
-    try { localStorage.setItem(`cartaBanco:${estabId}`, JSON.stringify(d)); } catch { /* sin persistencia */ }
+    const conFijos = aplicarDatosFijos(d);
+    setDatos(conFijos);
+    try { localStorage.setItem(`cartaBanco:${estabId}`, JSON.stringify(conFijos)); } catch { /* sin persistencia */ }
   }
 
   if (error) return <div className="p-10 text-center text-red-700">{error}</div>;
@@ -147,10 +162,10 @@ export default function CartaBancoPage() {
             </label>
             <Campo label="Banco" value={datos.banco} onChange={(v) => guardarDatos({ ...datos, banco: v })} />
             <Campo label="Ubicación de la agencia" value={datos.ubicacionAgencia} onChange={(v) => guardarDatos({ ...datos, ubicacionAgencia: v })} />
-            <Campo label="Cuenta de la empresa" value={datos.cuentaEmpresa} onChange={(v) => guardarDatos({ ...datos, cuentaEmpresa: v })} />
-            <Campo label="Titular de la cuenta" value={datos.titular} onChange={(v) => guardarDatos({ ...datos, titular: v })} />
-            <Campo label="Firmante" value={datos.firmante} onChange={(v) => guardarDatos({ ...datos, firmante: v })} />
-            <Campo label="Cargo / establecimiento" value={datos.cargo} onChange={(v) => guardarDatos({ ...datos, cargo: v })} />
+            <Campo label="Cuenta de la empresa" value={datos.cuentaEmpresa} readOnly />
+            <Campo label="Titular de la cuenta" value={datos.titular} readOnly />
+            <Campo label="Firmante" value={datos.firmante} readOnly />
+            <Campo label="Cargo / establecimiento" value={datos.cargo} readOnly />
           </div>
         </div>
       )}
@@ -219,11 +234,23 @@ export default function CartaBancoPage() {
   );
 }
 
-function Campo({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Campo({
+  label, value, onChange, readOnly = false,
+}: {
+  label: string;
+  value: string;
+  onChange?: (v: string) => void;
+  readOnly?: boolean;
+}) {
   return (
     <label className="block">
       <span className="label">{label}</span>
-      <input className="input" value={value} onChange={(e) => onChange(e.target.value)} />
+      <input
+        className={`input ${readOnly ? "bg-slate-50 text-slate-500" : ""}`}
+        value={value}
+        readOnly={readOnly}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
     </label>
   );
 }

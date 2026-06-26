@@ -40,6 +40,8 @@ public class NominaService
     private const string COD_IGSS = "IGSS";                      // EGRESO  (fin de mes)
     private const string COD_ANTICIPO = "ANTICIPO";              // EGRESO  (fin de mes: anticipo de quincena)
     private const string COD_COMISION = "COMISION";              // INGRESO (reparto de comisión)
+    private const string COD_AGUINALDO = "AGUINALDO";            // INGRESO (pago especial)
+    private const string COD_BONO14 = "BONO14";                  // INGRESO (pago especial)
 
     private static readonly string[] ManejadosQuincena = { COD_ANTICIPO_QUINCENA };
     private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_IGSS, COD_ANTICIPO };
@@ -163,6 +165,8 @@ public class NominaService
             : await GetConceptoAsync(COD_COMISION);
         if (concepto.Naturaleza != "INGRESO")
             throw new NominaException("El concepto de comisión debe ser de naturaleza INGRESO.");
+        if (!EsConceptoReparto(concepto.Codigo))
+            throw new NominaException("El reparto solo acepta conceptos de comisión o propina. Aguinaldo y Bono 14 se emiten desde su módulo.");
 
         // Determinar empleados destino y su peso.
         List<(Empleado emp, decimal peso)> destino;
@@ -227,6 +231,62 @@ public class NominaService
 
         await _db.SaveChangesAsync();
         return new RepartoResultadoDto(req.MontoTotal, acumulado, resultado.Count, resultado);
+    }
+
+    // ========================================================================
+    //  EMISION DE AGUINALDO / BONO 14 COMO PAGO ESPECIAL
+    // ========================================================================
+    public async Task<EmitirAguinaldoResultadoDto> EmitirAguinaldoAsync(EmitirAguinaldoRequest req)
+    {
+        var tipo = (req.Tipo ?? "").ToUpperInvariant();
+        if (tipo is not (COD_AGUINALDO or COD_BONO14))
+            throw new NominaException("Tipo debe ser 'AGUINALDO' o 'BONO14'.");
+        if (req.Anio is < 2000 or > 2100)
+            throw new NominaException("Año fuera de rango.");
+
+        var periodo = await _db.PeriodosPago.FindAsync(req.PeriodoPagoId)
+            ?? throw new KeyNotFoundException("Período no encontrado.");
+        if (periodo.Tipo != "EXTRA")
+            throw new NominaException("El Aguinaldo / Bono 14 debe emitirse en un período EXTRA.", conflict: true);
+        if (periodo.Estado == "CERRADO")
+            throw new NominaException("El período está CERRADO; no se puede emitir el pago.", conflict: true);
+
+        var concepto = await GetConceptoAsync(tipo);
+        if (concepto.Naturaleza != "INGRESO")
+            throw new NominaException($"El concepto '{tipo}' debe ser de naturaleza INGRESO.");
+
+        var (inicio, fin) = CicloAguinaldo(tipo, req.Anio);
+        var empleados = await _db.Empleados
+            .Where(e => e.Activo && e.Tipo == "PLANILLA")
+            .OrderBy(e => e.Apellidos).ThenBy(e => e.Nombres)
+            .ToListAsync();
+
+        int creadas = 0, actualizadas = 0, boletas = 0;
+        decimal total = 0m;
+        var descripcion = tipo == COD_AGUINALDO ? $"Aguinaldo {req.Anio}" : $"Bono 14 {req.Anio}";
+
+        foreach (var emp in empleados)
+        {
+            var dias = DiasEnCiclo(emp, inicio, fin);
+            var monto = Math.Round(emp.SueldoBase * dias / 365m, 2, MidpointRounding.AwayFromZero);
+            if (monto <= 0) continue;
+
+            var (boleta, nueva) = await GetOrCreateBoletaAsync(emp.EmpleadoId, req.PeriodoPagoId);
+            if (nueva) creadas++; else actualizadas++;
+
+            QuitarLineas(boleta, d => d.ConceptoId == concepto.ConceptoId);
+            AgregarLinea(boleta, concepto, monto, descripcion);
+            RecalcularTotales(boleta);
+            boleta.Estado = "CALCULADA";
+            boleta.ActualizadoEn = DateTime.UtcNow;
+
+            boletas++;
+            total += monto;
+        }
+
+        await _db.SaveChangesAsync();
+        return new EmitirAguinaldoResultadoDto(
+            periodo.PeriodoPagoId, tipo, req.Anio, boletas, creadas, actualizadas, total);
     }
 
     // ========================================================================
@@ -337,6 +397,24 @@ public class NominaService
     // ========================================================================
     //  HELPERS COMPARTIDOS
     // ========================================================================
+
+    private static (DateOnly inicio, DateOnly fin) CicloAguinaldo(string tipo, int anio)
+        => tipo == COD_AGUINALDO
+            ? (new DateOnly(anio - 1, 12, 1), new DateOnly(anio, 11, 30))
+            : (new DateOnly(anio - 1, 7, 1), new DateOnly(anio, 6, 30));
+
+    private static int DiasEnCiclo(Empleado emp, DateOnly inicio, DateOnly fin)
+    {
+        var desde = emp.FechaIngreso is { } ingreso && ingreso > inicio ? ingreso : inicio;
+        var hasta = emp.FechaBaja is { } baja && baja < fin ? baja : fin;
+        return Math.Max(0, hasta.DayNumber - desde.DayNumber);
+    }
+
+    private static bool EsConceptoReparto(string codigo)
+    {
+        var c = codigo.ToUpperInvariant();
+        return c == COD_COMISION || c.Contains("PROPINA");
+    }
 
     /// <summary>Recalcula TotalIngresos/TotalEgresos desde las líneas (Concepto debe estar cargado).</summary>
     public static void RecalcularTotales(Boleta boleta)

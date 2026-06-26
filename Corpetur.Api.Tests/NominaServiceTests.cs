@@ -24,7 +24,9 @@ public class NominaServiceTests
             Concepto("SUELDO", "INGRESO"),
             Concepto("IGSS", "EGRESO", true),
             Concepto("ANTICIPO", "EGRESO"),
-            Concepto("COMISION", "INGRESO"));
+            Concepto("COMISION", "INGRESO"),
+            Concepto("AGUINALDO", "INGRESO"),
+            Concepto("BONO14", "INGRESO"));
         db.SaveChanges();
     }
 
@@ -240,6 +242,27 @@ public class NominaServiceTests
         Assert.True(ex.Conflict);
     }
 
+    [Fact]
+    public async Task Reparto_conAguinaldo_lanzaValidacion()
+    {
+        using var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "MESON", Nombre = "Mesón" });
+        db.SaveChanges();
+        SembrarConceptos(db);
+        db.Empleados.Add(Empleado(1));
+        db.PeriodosPago.Add(new PeriodoPago { Anio = 2026, Mes = 12, Tipo = "EXTRA",
+            FechaInicio = new(2026, 12, 1), FechaFin = new(2026, 12, 31), Estado = "ABIERTO" });
+        db.SaveChanges();
+        var aguinaldo = await db.Conceptos.SingleAsync(c => c.Codigo == "AGUINALDO");
+
+        var svc = new NominaService(db);
+        var ex = await Assert.ThrowsAsync<NominaException>(() => svc.RepartirComisionAsync(
+            new RepartoComisionRequest(1, 1, 5000, "IGUAL", aguinaldo.ConceptoId, null, null)));
+
+        Assert.False(ex.Conflict);
+        Assert.Contains("Aguinaldo", ex.Message);
+    }
+
     // ---- El reparto deja la boleta en CALCULADA (no BORRADOR) ----
     [Fact]
     public async Task Reparto_dejaBoletaCalculada()
@@ -261,6 +284,85 @@ public class NominaServiceTests
 
         var b = await db.Boletas.FirstAsync(x => x.EmpleadoId == e1.EmpleadoId);
         Assert.Equal("CALCULADA", b.Estado);
+    }
+
+    // ---- Aguinaldo / Bono 14 como pago especial ----
+    [Fact]
+    public async Task EmitirAguinaldo_calculaProporcionalYGeneraBoleta()
+    {
+        using var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "ISLA", Nombre = "Isla" });
+        db.SaveChanges();
+        SembrarConceptos(db);
+        var emp = Empleado(1, sueldo: 3650);
+        emp.FechaIngreso = new DateOnly(2026, 11, 1);
+        db.Empleados.Add(emp);
+        var periodo = new PeriodoPago { Anio = 2026, Mes = 12, Tipo = "EXTRA",
+            FechaInicio = new(2026, 12, 1), FechaFin = new(2026, 12, 31), Estado = "ABIERTO" };
+        db.PeriodosPago.Add(periodo);
+        db.SaveChanges();
+
+        var svc = new NominaService(db);
+        var r = await svc.EmitirAguinaldoAsync(new EmitirAguinaldoRequest("AGUINALDO", 2026, periodo.PeriodoPagoId));
+
+        var boleta = await db.Boletas.Include(b => b.Detalles).ThenInclude(d => d.Concepto)
+            .FirstAsync(b => b.EmpleadoId == emp.EmpleadoId);
+        var detalle = boleta.Detalles.Single(d => d.Concepto!.Codigo == "AGUINALDO");
+
+        Assert.Equal(1, r.Boletas);
+        Assert.Equal(290m, r.TotalEmitido); // 3650 * 29 dias / 365
+        Assert.Equal(290m, detalle.Monto);
+        Assert.Equal(290m, boleta.TotalIngresos);
+        Assert.Equal("CALCULADA", boleta.Estado);
+    }
+
+    [Fact]
+    public async Task EmitirAguinaldo_esIdempotente()
+    {
+        using var db = NuevoContexto();
+        db.Establecimientos.Add(new Establecimiento { Codigo = "ISLA", Nombre = "Isla" });
+        db.SaveChanges();
+        SembrarConceptos(db);
+        var emp = Empleado(1, sueldo: 3650);
+        emp.FechaIngreso = new DateOnly(2026, 11, 1);
+        db.Empleados.Add(emp);
+        var periodo = new PeriodoPago { Anio = 2026, Mes = 12, Tipo = "EXTRA",
+            FechaInicio = new(2026, 12, 1), FechaFin = new(2026, 12, 31), Estado = "ABIERTO" };
+        db.PeriodosPago.Add(periodo);
+        db.SaveChanges();
+
+        var svc = new NominaService(db);
+        await svc.EmitirAguinaldoAsync(new EmitirAguinaldoRequest("AGUINALDO", 2026, periodo.PeriodoPagoId));
+        var r = await svc.EmitirAguinaldoAsync(new EmitirAguinaldoRequest("AGUINALDO", 2026, periodo.PeriodoPagoId));
+
+        var boleta = await db.Boletas.Include(b => b.Detalles).ThenInclude(d => d.Concepto)
+            .SingleAsync(b => b.EmpleadoId == emp.EmpleadoId);
+        var detalles = boleta.Detalles.Where(d => d.Concepto!.Codigo == "AGUINALDO").ToList();
+
+        Assert.Equal(0, r.BoletasCreadas);
+        Assert.Equal(1, r.BoletasActualizadas);
+        Assert.Single(detalles);
+        Assert.Equal(290m, detalles[0].Monto);
+        Assert.Equal(290m, boleta.TotalIngresos);
+    }
+
+    [Theory]
+    [InlineData("FIN_MES", "ABIERTO")]
+    [InlineData("EXTRA", "CERRADO")]
+    public async Task EmitirAguinaldo_rechazaPeriodoNoExtraOCerrado(string tipoPeriodo, string estado)
+    {
+        using var db = NuevoContexto();
+        SembrarConceptos(db);
+        var periodo = new PeriodoPago { Anio = 2026, Mes = 12, Tipo = tipoPeriodo,
+            FechaInicio = new(2026, 12, 1), FechaFin = new(2026, 12, 31), Estado = estado };
+        db.PeriodosPago.Add(periodo);
+        db.SaveChanges();
+
+        var svc = new NominaService(db);
+        var ex = await Assert.ThrowsAsync<NominaException>(() =>
+            svc.EmitirAguinaldoAsync(new EmitirAguinaldoRequest("AGUINALDO", 2026, periodo.PeriodoPagoId)));
+
+        Assert.True(ex.Conflict);
     }
 
     // ---- Cerrar período: validaciones ----

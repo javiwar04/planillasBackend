@@ -177,6 +177,18 @@ export interface ProvisionesResultado {
   actualizadas: number;
 }
 
+export type TipoPrestacion = "AGUINALDO" | "BONO14";
+
+export interface EmitirAguinaldoResultado {
+  periodoPagoId: number;
+  tipo: TipoPrestacion;
+  anio: number;
+  boletas: number;
+  boletasCreadas: number;
+  boletasActualizadas: number;
+  totalEmitido: number;
+}
+
 // --- Boletas ---
 export type EstadoBoleta = "BORRADOR" | "CALCULADA" | "PAGADA";
 

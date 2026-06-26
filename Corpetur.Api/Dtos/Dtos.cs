@@ -183,6 +183,17 @@ public record GenerarResultadoDto(int PeriodoPagoId, string Tipo, string Estado,
 
 public record ProvisionesResultadoDto(int Anio, int Mes, int Generadas, int Actualizadas);
 
+// --- Emision de Aguinaldo / Bono 14 como pago especial ---
+public record EmitirAguinaldoRequest(string Tipo, int Anio, int PeriodoPagoId); // AGUINALDO | BONO14
+public record EmitirAguinaldoResultadoDto(
+    int PeriodoPagoId,
+    string Tipo,
+    int Anio,
+    int Boletas,
+    int BoletasCreadas,
+    int BoletasActualizadas,
+    decimal TotalEmitido);
+
 // --- Reparto de comisión por establecimiento ---
 public record RepartoItemDto(int EmpleadoId, decimal? Peso);
 public record RepartoComisionRequest(

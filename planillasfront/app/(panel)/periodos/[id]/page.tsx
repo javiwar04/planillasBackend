@@ -325,7 +325,8 @@ function BoletaModal({
   const toast = useToast();
   const editable = !cerrado && boleta.estado !== "PAGADA";
   // Líneas que genera/regenera el motor: no se editan a mano (se recalculan).
-  const BLOQUEADAS = ["SUELDO", "IGSS", "ANTICIPO", "ANT_QUINCENA"];
+  const BLOQUEADAS = ["SUELDO", "IGSS", "ANTICIPO", "ANT_QUINCENA", "AGUINALDO", "BONO14", "BONO_14"];
+  const conceptosManuales = conceptos.filter((c) => !BLOQUEADAS.includes(c.codigo));
   const [conceptoId, setConceptoId] = useState(0);
   const [monto, setMonto] = useState("");
   const [desc, setDesc] = useState("");
@@ -443,12 +444,12 @@ function BoletaModal({
                 onChange={(e) => setConceptoId(Number(e.target.value))}>
                 <option value={0}>Concepto…</option>
                 <optgroup label="Ingresos">
-                  {conceptos.filter((c) => c.naturaleza === "INGRESO").map((c) => (
+                  {conceptosManuales.filter((c) => c.naturaleza === "INGRESO").map((c) => (
                     <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>
                   ))}
                 </optgroup>
                 <optgroup label="Egresos">
-                  {conceptos.filter((c) => c.naturaleza === "EGRESO").map((c) => (
+                  {conceptosManuales.filter((c) => c.naturaleza === "EGRESO").map((c) => (
                     <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>
                   ))}
                 </optgroup>
@@ -488,8 +489,12 @@ function RepartoModal({
   onClose: () => void;
   onDone: (msg: string) => Promise<void>;
 }) {
-  const conceptosIngreso = conceptos.filter((c) => c.naturaleza === "INGRESO");
-  const conceptoComision = conceptosIngreso.find((c) => c.codigo === "COMISION");
+  const esConceptoReparto = (codigo: string) => {
+    const c = codigo.toUpperCase();
+    return c === "COMISION" || c.includes("PROPINA");
+  };
+  const conceptosReparto = conceptos.filter((c) => c.naturaleza === "INGRESO" && esConceptoReparto(c.codigo));
+  const conceptoComision = conceptosReparto.find((c) => c.codigo === "COMISION");
   const [conceptoId, setConceptoId] = useState(0);
   const [montoTotal, setMontoTotal] = useState("");
   const [modo, setModo] = useState<"IGUAL" | "PESO">("IGUAL");
@@ -532,6 +537,7 @@ function RepartoModal({
     setError(null);
     if (!montoTotal) { setError("Indica el monto de la bolsa."); return; }
     if (sel.size === 0) { setError("Selecciona al menos un colaborador."); return; }
+    if (!conceptoId && !conceptoComision) { setError("No hay concepto de comisión configurado."); return; }
     setEnviando(true);
     try {
       const body: Record<string, unknown> = {
@@ -584,7 +590,7 @@ function RepartoModal({
               <span className="label">Concepto</span>
               <select className="input" value={conceptoId} onChange={(e) => setConceptoId(Number(e.target.value))}>
                 <option value={0}>{conceptoComision ? `${conceptoComision.nombre} (predeterminado)` : "Comisión"}</option>
-                {conceptosIngreso.map((c) => (
+                {conceptosReparto.map((c) => (
                   <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>
                 ))}
               </select>

@@ -27,7 +27,7 @@ public class PeriodosPagoController : ControllerBase
     {
         var q = _db.PeriodosPago.AsNoTracking().AsQueryable();
         if (anio is not null) q = q.Where(p => p.Anio == anio);
-        if (tipo is "QUINCENA" or "FIN_MES") q = q.Where(p => p.Tipo == tipo);
+        if (tipo is "QUINCENA" or "FIN_MES" or "EXTRA") q = q.Where(p => p.Tipo == tipo);
         if (estado is "ABIERTO" or "CALCULADO" or "CERRADO") q = q.Where(p => p.Estado == estado);
         var list = await q.OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).ThenBy(p => p.Tipo)
             .Select(p => new PeriodoPagoDto(p.PeriodoPagoId, p.Anio, p.Mes, p.Tipo,
