@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
 import { IconPlus } from "@/components/icons";
+import { usePaginado, Paginacion } from "@/components/Paginacion";
 import type { Usuario, UsuarioCreate, Rol } from "@/lib/types";
 
 const ROLES: Rol[] = ["ADMIN", "CONTABILIDAD", "CAPTURA", "LECTURA"];
@@ -31,6 +32,7 @@ export default function UsuariosPage() {
 
   const [resetId, setResetId] = useState<number | null>(null);
   const [resetPass, setResetPass] = useState("");
+  const pag = usePaginado(usuarios);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -151,10 +153,10 @@ export default function UsuariosPage() {
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
                 <tr><td colSpan={5} className="td py-10 text-center text-slate-400">Cargando…</td></tr>
-              ) : usuarios.length === 0 ? (
+              ) : pag.total === 0 ? (
                 <tr><td colSpan={5} className="td py-10 text-center text-slate-400">Sin usuarios.</td></tr>
               ) : (
-                usuarios.map((u) => (
+                pag.visibles.map((u) => (
                   <tr key={u.usuarioId} className="hover:bg-slate-50">
                     <td className="td font-medium text-slate-900">
                       {u.nombre}
@@ -180,6 +182,7 @@ export default function UsuariosPage() {
             </tbody>
           </table>
         </div>
+        <Paginacion {...pag} />
       </div>
 
       {/* Modal crear/editar */}

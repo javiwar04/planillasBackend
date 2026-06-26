@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { SkeletonRows } from "@/components/Skeleton";
+import { usePaginado, Paginacion } from "@/components/Paginacion";
 import type { Auditoria } from "@/lib/types";
 
 const accionBadge: Record<string, string> = {
@@ -36,6 +37,8 @@ export default function AuditoriaPage() {
   }, [entidad, accion]);
 
   useEffect(() => { cargar(); }, [cargar]);
+
+  const pag = usePaginado(filas);
 
   if (usuario && usuario.rol !== "ADMIN") {
     return <div className="card p-10 text-center text-slate-500">Esta sección es solo para administradores.</div>;
@@ -82,7 +85,7 @@ export default function AuditoriaPage() {
                 <SkeletonRows cols={6} />
               ) : filas.length === 0 ? (
                 <tr><td colSpan={6} className="td py-10 text-center text-slate-400">Sin registros.</td></tr>
-              ) : filas.map((a) => (
+              ) : pag.visibles.map((a) => (
                 <tr key={a.auditoriaId} className="hover:bg-slate-50">
                   <td className="td whitespace-nowrap text-slate-500">{fmt(a.fecha)}</td>
                   <td className="td">{a.usuario ?? "—"}</td>
@@ -95,6 +98,7 @@ export default function AuditoriaPage() {
             </tbody>
           </table>
         </div>
+        <Paginacion {...pag} />
       </div>
     </div>
   );

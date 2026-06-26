@@ -7,6 +7,7 @@ import { useToast } from "@/lib/toast";
 import { money } from "@/lib/format";
 import { IconPlus } from "@/components/icons";
 import { SkeletonRows } from "@/components/Skeleton";
+import { usePaginado, Paginacion } from "@/components/Paginacion";
 import type { Empleado, EmpleadoCreate, Establecimiento, Departamento, Puesto, EmpleadoMovimiento } from "@/lib/types";
 
 const hoyISO = new Date().toISOString().slice(0, 10);
@@ -158,6 +159,7 @@ export default function EmpleadosPage() {
   const filtrados = empleados.filter((e) =>
     `${e.nombres} ${e.apellidos} ${e.nit ?? ""}`.toLowerCase().includes(busqueda.toLowerCase())
   );
+  const pag = usePaginado(filtrados);
 
   return (
     <div className="space-y-6">
@@ -205,7 +207,7 @@ export default function EmpleadosPage() {
                   {empleados.length === 0 ? "Sin empleados todavía." : "Sin coincidencias."}
                 </td></tr>
               ) : (
-                filtrados.map((e) => (
+                pag.visibles.map((e) => (
                   <tr key={e.empleadoId} className="hover:bg-slate-50">
                     <td className="td">
                       <Link href={`/empleados/${e.empleadoId}`} className="font-medium text-brand-700 hover:underline">
@@ -235,6 +237,7 @@ export default function EmpleadosPage() {
             </tbody>
           </table>
         </div>
+        <Paginacion {...pag} />
       </div>
 
       {modal && (

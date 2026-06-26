@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { IconPlus } from "@/components/icons";
+import { usePaginado, Paginacion } from "@/components/Paginacion";
 
 type Valor = string | number | boolean | null;
 export type FormVals = Record<string, Valor>;
@@ -119,6 +120,7 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
   }
 
   const camposVisibles = campos.filter((c) => !(c.soloNuevo && editId !== null));
+  const pag = usePaginado(items);
 
   return (
     <div className="space-y-6">
@@ -151,7 +153,7 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
               ) : items.length === 0 ? (
                 <tr><td colSpan={columnas.length + 1} className="td py-10 text-center text-slate-400">Sin registros.</td></tr>
               ) : (
-                items.map((item) => (
+                pag.visibles.map((item) => (
                   <tr key={String(item[idKey])} className="hover:bg-slate-50">
                     {columnas.map((c, i) => (
                       <td key={i} className={`td ${c.align === "right" ? "text-right" : ""}`}>{c.render(item)}</td>
@@ -166,6 +168,7 @@ export function Catalogo<T extends Record<string, unknown>>(props: {
             </tbody>
           </table>
         </div>
+        <Paginacion {...pag} />
       </div>
 
       {modal && (
