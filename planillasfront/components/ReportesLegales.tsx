@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
-import { money, mesNombre } from "@/lib/format";
+import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
 import type { Empleado, BoletaLista, Periodo } from "@/lib/types";
 
@@ -67,7 +67,7 @@ export function PlanillaIGSS() {
             <option value={0}>Seleccione…</option>
             {periodos.map((p) => (
               <option key={p.periodoPagoId} value={p.periodoPagoId}>
-                {mesNombre(p.mes)} {p.anio} · {p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}
+                {mesNombre(p.mes)} {p.anio} · {tipoPeriodoLabel(p.tipo)}
               </option>
             ))}
           </select>
@@ -158,7 +158,7 @@ export function LibroSalarios() {
 
   function exportar() {
     const datos = filas.map((f) => ({
-      Colaborador: f.nombre, Mes: mesNombre(f.mes), Tipo: f.tipo === "QUINCENA" ? "Quincena" : "Fin de mes",
+      Colaborador: f.nombre, Mes: mesNombre(f.mes), Tipo: tipoPeriodoLabel(f.tipo),
       Ingresos: f.ingresos, Egresos: f.egresos, Líquido: f.liquido,
     }));
     exportarExcel(`libro_salarios_${anio}`, datos, "Libro de salarios");
@@ -194,7 +194,7 @@ export function LibroSalarios() {
                 <tr key={i} className="hover:bg-slate-50">
                   <td className="td font-medium text-slate-900">{f.nombre}</td>
                   <td className="td">{mesNombre(f.mes)}</td>
-                  <td className="td text-slate-500">{f.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}</td>
+                  <td className="td text-slate-500">{tipoPeriodoLabel(f.tipo)}</td>
                   <td className="td text-right">{money(f.ingresos)}</td>
                   <td className="td text-right">{money(f.egresos)}</td>
                   <td className="td text-right font-semibold">{money(f.liquido)}</td>

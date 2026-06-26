@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
-import { money, mesNombre } from "@/lib/format";
+import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
 import { PlanillaIGSS, LibroSalarios } from "@/components/ReportesLegales";
 import type { Empleado, BoletaLista, Periodo, ProvisionLaboral } from "@/lib/types";
@@ -103,7 +103,7 @@ function Historico() {
   function filas2Export() {
     return filas.map(({ b, p }) => ({
       Período: p ? `${mesNombre(p.mes)} ${p.anio}` : "",
-      Tipo: p ? (p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes") : "",
+      Tipo: p ? tipoPeriodoLabel(p.tipo) : "",
       Estado: b.estado,
       Ingresos: b.totalIngresos,
       Egresos: b.totalEgresos,
@@ -152,7 +152,7 @@ function Historico() {
                   filas.map(({ b, p }) => (
                     <tr key={b.boletaId} className="hover:bg-slate-50">
                       <td className="td font-medium text-slate-900">{p ? `${mesNombre(p.mes)} ${p.anio}` : "—"}</td>
-                      <td className="td">{p ? (p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes") : "—"}</td>
+                      <td className="td">{p ? tipoPeriodoLabel(p.tipo) : "—"}</td>
                       <td className="td"><span className="badge bg-slate-100 text-slate-600">{b.estado}</span></td>
                       <td className="td text-right">{money(b.totalIngresos)}</td>
                       <td className="td text-right">{money(b.totalEgresos)}</td>

@@ -484,7 +484,9 @@ function RepartoModal({
   onClose: () => void;
   onDone: (msg: string) => Promise<void>;
 }) {
-  const conceptoComision = conceptos.find((c) => c.codigo === "COMISION");
+  const conceptosIngreso = conceptos.filter((c) => c.naturaleza === "INGRESO");
+  const conceptoComision = conceptosIngreso.find((c) => c.codigo === "COMISION");
+  const [conceptoId, setConceptoId] = useState(0);
   const [montoTotal, setMontoTotal] = useState("");
   const [modo, setModo] = useState<"IGUAL" | "PESO">("IGUAL");
   const [descripcion, setDescripcion] = useState("");
@@ -533,7 +535,7 @@ function RepartoModal({
         establecimientoId: filtroEstab || null,
         montoTotal: Number(montoTotal),
         modo,
-        conceptoId: conceptoComision?.conceptoId ?? null,
+        conceptoId: conceptoId || conceptoComision?.conceptoId || null,
         descripcion: descripcion.trim() || null,
         empleados: [...sel].map((id) => ({ empleadoId: id, peso: modo === "PESO" ? Number(pesos[id] ?? "0") : 1 })),
       };
@@ -573,11 +575,22 @@ function RepartoModal({
             </label>
           </div>
 
-          <label className="block">
-            <span className="label">Descripción</span>
-            <input className="input" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="(opcional)" />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="label">Concepto</span>
+              <select className="input" value={conceptoId} onChange={(e) => setConceptoId(Number(e.target.value))}>
+                <option value={0}>{conceptoComision ? `${conceptoComision.nombre} (predeterminado)` : "Comisión"}</option>
+                {conceptosIngreso.map((c) => (
+                  <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="label">Descripción</span>
+              <input className="input" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="ej. Propina / Bono ocupación" />
+            </label>
+          </div>
 
           {/* Selección de colaboradores */}
           <div className="flex flex-wrap items-center gap-2">

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { money, mesNombre } from "@/lib/format";
+import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import {
   IconBuilding, IconUsers, IconWallet, IconPercent, IconCash,
   IconCalendar, IconChart, IconReceipt,
@@ -102,7 +102,7 @@ export default function DashboardPage() {
             {periodos.length === 0 && <option value={0}>Sin períodos</option>}
             {periodos.map((p) => (
               <option key={p.periodoPagoId} value={p.periodoPagoId}>
-                {mesNombre(p.mes)} {p.anio} · {p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}
+                {mesNombre(p.mes)} {p.anio} · {tipoPeriodoLabel(p.tipo)}
               </option>
             ))}
           </select>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="font-semibold text-slate-900">Neto por establecimiento</h2>
             <p className="text-xs text-slate-400">
-              {periodoActual ? `${mesNombre(periodoActual.mes)} ${periodoActual.anio} · ${periodoActual.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}` : "Selecciona un período"}
+              {periodoActual ? `${mesNombre(periodoActual.mes)} ${periodoActual.anio} · ${tipoPeriodoLabel(periodoActual.tipo)}` : "Selecciona un período"}
             </p>
           </div>
           <div className="space-y-3 p-5">
@@ -199,7 +199,7 @@ export default function DashboardPage() {
               ) : periodos.slice(0, 5).map((p) => (
                 <Link key={p.periodoPagoId} href={`/periodos/${p.periodoPagoId}`}
                   className="flex items-center justify-between px-5 py-3 text-sm transition hover:bg-slate-50">
-                  <span className="text-slate-700">{mesNombre(p.mes)} {p.anio} · {p.tipo === "QUINCENA" ? "Quincena" : "Fin de mes"}</span>
+                  <span className="text-slate-700">{mesNombre(p.mes)} {p.anio} · {tipoPeriodoLabel(p.tipo)}</span>
                   <span className={`badge ${p.estado === "CERRADO" ? "bg-brand-100 text-brand-800" : p.estado === "CALCULADO" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>{p.estado}</span>
                 </Link>
               ))}
