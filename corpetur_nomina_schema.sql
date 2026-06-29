@@ -462,4 +462,11 @@ INSERT INTO dbo.ParametroNomina (Clave, Valor, Descripcion) VALUES
  (N'BONO14',         8.3300, N'Provisión bono 14 (%)'),
  (N'AGUINALDO',      8.3300, N'Provisión aguinaldo (%)'),
  (N'VACACIONES',     4.1700, N'Provisión vacaciones (%)'),
- (N'BONO_INCENTIVO', 250.00, N'Bonificación incentivo Dto. 37-2001 (monto fijo Q)');
+ (N'BONO_INCENTIVO', 250.00, N'Bonificación incentivo Dto. 37-2001 (monto fijo Q)'),
+ -- ISR Régimen de Asalariados (Dto. 10-2012). La deducción única cambia por año:
+ -- el contador la ajusta. Tramo 1: 5% hasta el límite; sobre el excedente, base + 7%.
+ (N'ISR_DEDUCCION',      48000.0000, N'ISR: deducción única anual (Q). Ajustable por año.'),
+ (N'ISR_TASA1',              5.0000, N'ISR: tasa tramo 1 (%)'),
+ (N'ISR_TRAMO1_LIMITE',  300000.0000, N'ISR: límite de renta imponible del tramo 1 (Q)'),
+ (N'ISR_TASA2',              7.0000, N'ISR: tasa tramo 2 (% sobre el excedente)'),
+ (N'ISR_TRAMO2_BASE',     15000.0000, N'ISR: impuesto base del tramo 2 (Q = 5% de 300,000)');

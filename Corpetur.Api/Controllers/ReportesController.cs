@@ -93,4 +93,69 @@ public class ReportesController : ControllerBase
 
         return Ok(filas);
     }
+
+    // Cuadre anual de ISR (Régimen de Asalariados, Dto. 10-2012).
+    // GET /api/reportes/isr-anual?anio=2025&deduccion=48000
+    // Renta gravada = ingresos del año EXCEPTO exentos (aguinaldo, bono 14, anticipo
+    // de quincena). Renta neta = gravada − IGSS − deducción única. ISR del año por
+    // tramos (5% hasta el límite; sobre el excedente, base + 7%). Diferencia = ISR del
+    // año − ISR retenido: positiva = el colaborador paga; negativa = se le devuelve.
+    [HttpGet("isr-anual")]
+    public async Task<ActionResult<IEnumerable<IsrAnualDto>>> IsrAnual([FromQuery] int anio, [FromQuery] decimal? deduccion)
+    {
+        if (anio < 2000 || anio > 2100) return BadRequest("Año fuera de rango.");
+
+        var p = await _db.ParametrosNomina.AsNoTracking().ToDictionaryAsync(x => x.Clave, x => x.Valor);
+        decimal Par(string clave, decimal def) => p.TryGetValue(clave, out var v) ? v : def;
+        var ded = deduccion ?? Par("ISR_DEDUCCION", 48000m);
+        var tasa1 = Par("ISR_TASA1", 5m) / 100m;
+        var limite1 = Par("ISR_TRAMO1_LIMITE", 300000m);
+        var tasa2 = Par("ISR_TASA2", 7m) / 100m;
+        var base2 = Par("ISR_TRAMO2_BASE", 15000m);
+
+        // Conceptos exentos (no entran a la base gravable del ISR) y los descuentos
+        // que necesitamos aparte.
+        var exentos = new HashSet<string> { "ANT_QUINCENA", "AGUINALDO", "BONO14", "BONO_14" };
+
+        var lineas = await _db.BoletaDetalles.AsNoTracking()
+            .Where(d => d.Boleta!.PeriodoPago!.Anio == anio && d.Boleta.Empleado!.Tipo == "PLANILLA")
+            .Select(d => new
+            {
+                d.Boleta!.EmpleadoId,
+                Nombre = d.Boleta.Empleado!.Nombres + " " + d.Boleta.Empleado.Apellidos,
+                d.Boleta.Empleado.Nit,
+                Establecimiento = d.Boleta.Empleado.Establecimiento!.Nombre,
+                Codigo = d.Concepto!.Codigo,
+                d.Concepto.Naturaleza,
+                d.Monto,
+            })
+            .ToListAsync();
+
+        decimal R(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
+
+        var filas = lineas
+            .GroupBy(l => l.EmpleadoId)
+            .Select(g =>
+            {
+                var first = g.First();
+                decimal gravada = 0m, igss = 0m, retenido = 0m;
+                foreach (var x in g)
+                {
+                    var c = x.Codigo.ToUpperInvariant();
+                    if (c == "IGSS") igss += x.Monto;
+                    else if (c == "ISR") retenido += x.Monto;
+                    else if (x.Naturaleza == "INGRESO" && !exentos.Contains(c)) gravada += x.Monto;
+                }
+                var rentaNeta = Math.Max(0m, gravada - igss - ded);
+                var isr = rentaNeta <= limite1
+                    ? R(rentaNeta * tasa1)
+                    : R(base2 + (rentaNeta - limite1) * tasa2);
+                return new IsrAnualDto(g.Key, first.Nombre, first.Nit, first.Establecimiento,
+                    R(gravada), R(igss), R(ded), rentaNeta, isr, R(retenido), R(isr - retenido));
+            })
+            .OrderBy(f => f.Nombre)
+            .ToList();
+
+        return Ok(filas);
+    }
 }

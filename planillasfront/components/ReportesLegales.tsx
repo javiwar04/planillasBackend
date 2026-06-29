@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
-import type { Empleado, BoletaLista, Periodo, DeclaracionAnual } from "@/lib/types";
+import type { Empleado, BoletaLista, Periodo, DeclaracionAnual, IsrAnual } from "@/lib/types";
 
 interface Parametro { clave: string; valor: number }
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -269,6 +269,126 @@ export function DeclaracionAnualReporte() {
                   <td className="td text-right font-semibold">{money(tot.aguinaldo)}</td>
                   <td className="td text-right font-semibold">{money(tot.bono14)}</td>
                   <td className="td text-right font-semibold">{money(tot.igss)}</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Cuadre anual de ISR ---------------- */
+export function IsrAnualReporte() {
+  const hoy = new Date();
+  const [anio, setAnio] = useState(hoy.getFullYear());
+  const [deduccion, setDeduccion] = useState("");
+  const [filas, setFilas] = useState<IsrAnual[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cargar = useCallback(async () => {
+    setCargando(true); setError(null);
+    try {
+      const q = deduccion.trim() ? `&deduccion=${Number(deduccion)}` : "";
+      setFilas(await api<IsrAnual[]>(`/reportes/isr-anual?anio=${anio}${q}`));
+    } catch (e) { setError(e instanceof ApiError ? e.message : "No se pudo generar el cuadre de ISR."); }
+    finally { setCargando(false); }
+  }, [anio, deduccion]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const tot = filas.reduce((a, f) => ({
+    gravada: a.gravada + f.rentaGravada, neta: a.neta + f.rentaNeta, isr: a.isr + f.isrAnual,
+    ret: a.ret + f.isrRetenido, dif: a.dif + f.diferencia,
+  }), { gravada: 0, neta: 0, isr: 0, ret: 0, dif: 0 });
+
+  function exportar() {
+    const datos = filas.map((f) => ({
+      Colaborador: f.nombre, NIT: f.nit ?? "", Establecimiento: f.establecimiento ?? "",
+      "Renta gravada": f.rentaGravada, IGSS: f.igss, Deducción: f.deduccion, "Renta neta": f.rentaNeta,
+      "ISR del año": f.isrAnual, "ISR retenido": f.isrRetenido,
+      Diferencia: f.diferencia, Resultado: f.diferencia > 0 ? "A pagar" : f.diferencia < 0 ? "Devolución" : "Cuadra",
+    }));
+    exportarExcel(`isr_anual_${anio}`, datos, "ISR anual");
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="label">Año</span>
+          <input type="number" className="input w-28" value={anio} onChange={(e) => setAnio(Number(e.target.value))} />
+        </label>
+        <label className="block">
+          <span className="label">Deducción única (Q)</span>
+          <input type="number" className="input w-36" placeholder="48000 (param.)" value={deduccion}
+            onChange={(e) => setDeduccion(e.target.value)} />
+        </label>
+        {filas.length > 0 && <button onClick={exportar} className="btn-ghost btn-sm">Exportar Excel</button>}
+      </div>
+
+      <p className="text-xs text-slate-400">
+        Régimen de Asalariados. Renta gravada del año (sin aguinaldo, bono 14 ni anticipo de quincena) − IGSS −
+        deducción única = renta neta; ISR del año al 5% (7% sobre el excedente de Q300,000) vs. lo retenido.
+        Diferencia: <span className="text-red-600">positiva = el colaborador paga</span>,{" "}
+        <span className="text-emerald-600">negativa = se le devuelve</span>. La deducción se lee del parámetro
+        <span className="font-medium"> ISR_DEDUCCION</span> (o escríbela arriba para un escenario puntual).
+      </p>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="th">Colaborador</th>
+                <th className="th text-right">Renta gravada</th>
+                <th className="th text-right">IGSS</th>
+                <th className="th text-right">Renta neta</th>
+                <th className="th text-right">ISR año</th>
+                <th className="th text-right">Retenido</th>
+                <th className="th text-right">Diferencia</th>
+                <th className="th">Resultado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {cargando ? (
+                <tr><td colSpan={8} className="td py-8 text-center text-slate-400">Cargando…</td></tr>
+              ) : filas.length === 0 ? (
+                <tr><td colSpan={8} className="td py-8 text-center text-slate-400">Sin boletas de planilla en {anio}.</td></tr>
+              ) : filas.map((f) => (
+                <tr key={f.empleadoId} className="hover:bg-slate-50">
+                  <td className="td font-medium text-slate-900">{f.nombre}<div className="text-xs text-slate-400">{f.nit ?? ""}</div></td>
+                  <td className="td text-right">{money(f.rentaGravada)}</td>
+                  <td className="td text-right text-slate-500">{money(f.igss)}</td>
+                  <td className="td text-right">{money(f.rentaNeta)}</td>
+                  <td className="td text-right">{money(f.isrAnual)}</td>
+                  <td className="td text-right text-slate-500">{money(f.isrRetenido)}</td>
+                  <td className={`td text-right font-semibold ${f.diferencia > 0 ? "text-red-600" : f.diferencia < 0 ? "text-emerald-600" : "text-slate-500"}`}>{money(f.diferencia)}</td>
+                  <td className="td">
+                    {f.diferencia > 0
+                      ? <span className="badge bg-red-100 text-red-700">A pagar</span>
+                      : f.diferencia < 0
+                        ? <span className="badge bg-emerald-100 text-emerald-700">Devolución</span>
+                        : <span className="badge bg-slate-100 text-slate-500">Cuadra</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            {filas.length > 0 && (
+              <tfoot className="border-t-2 border-slate-200 bg-slate-50">
+                <tr>
+                  <td className="td font-bold">Totales {anio}</td>
+                  <td className="td text-right font-semibold">{money(tot.gravada)}</td>
+                  <td className="td text-right" />
+                  <td className="td text-right font-semibold">{money(tot.neta)}</td>
+                  <td className="td text-right font-semibold">{money(tot.isr)}</td>
+                  <td className="td text-right font-semibold">{money(tot.ret)}</td>
+                  <td className={`td text-right font-bold ${tot.dif > 0 ? "text-red-600" : "text-emerald-600"}`}>{money(tot.dif)}</td>
+                  <td className="td" />
                 </tr>
               </tfoot>
             )}

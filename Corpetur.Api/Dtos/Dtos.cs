@@ -110,6 +110,23 @@ public record DeclaracionAnualDto(
     decimal OtrosIngresos,
     decimal IgssLaboral);
 
+// Cuadre anual de ISR (Régimen de Asalariados). Por colaborador de planilla:
+// renta gravada del año, menos IGSS y deducción única = renta neta; ISR del año
+// (tramos 5%/7%) vs. lo retenido durante el año; la diferencia es a pagar (+) o
+// a devolver (−).
+public record IsrAnualDto(
+    int EmpleadoId,
+    string Nombre,
+    string? Nit,
+    string? Establecimiento,
+    decimal RentaGravada,
+    decimal Igss,
+    decimal Deduccion,
+    decimal RentaNeta,
+    decimal IsrAnual,
+    decimal IsrRetenido,
+    decimal Diferencia);
+
 // --- Traslados / movimientos de empleado ---
 public record TrasladoRequest(DateOnly Fecha, int? EstablecimientoId, int? DepartamentoId, int? PuestoId,
     decimal? SueldoBase, string? Motivo);

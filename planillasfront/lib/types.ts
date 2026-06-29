@@ -362,6 +362,21 @@ export interface DeclaracionAnual {
   igssLaboral: number;
 }
 
+// --- Cuadre anual de ISR ---
+export interface IsrAnual {
+  empleadoId: number;
+  nombre: string;
+  nit?: string | null;
+  establecimiento?: string | null;
+  rentaGravada: number;
+  igss: number;
+  deduccion: number;
+  rentaNeta: number;
+  isrAnual: number;
+  isrRetenido: number;
+  diferencia: number;
+}
+
 // --- Pasivo laboral (cuadro Kurt) ---
 export interface ProvisionLaboral {
   provisionLaboralId: number;
