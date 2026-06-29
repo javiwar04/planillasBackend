@@ -41,7 +41,7 @@ no hay separación de acceso por establecimiento).
 - **Prestamo / PrestamoMovimiento**: préstamos con saldo amortizable (Corpetur, Bantrab).
 - **MetricaDiaria / ReglaBonificacion**: ventas/ocupación → comisiones automáticas.
 - **ParametroNomina**: tasas (IGSS, ISR, provisiones) configurables, NO quemadas en código.
-- **ProvisionLaboral**: histórico mensual del pasivo laboral (el "cuadro Kurt").
+- **ProvisionLaboral**: histórico mensual del pasivo laboral.
 
 ## Convenciones (respetarlas siempre)
 

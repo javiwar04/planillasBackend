@@ -23,7 +23,7 @@ public class NominaException : Exception
 ///    sueldo base) y el anticipo realmente pagado en la(s) quincena(s) del mismo mes
 ///    (leído de las boletas de quincena, no asumido). Comisiones, ISR, préstamos y otros
 ///    descuentos son líneas manuales (se capturan aparte; ver reparto de comisión).
-///  - PROVISIONES (cuadro Kurt): indemnización/bono14/aguinaldo/vacaciones + IGSS patronal +
+///  - PROVISIONES (pasivo laboral): indemnización/bono14/aguinaldo/vacaciones + IGSS patronal +
 ///    INTECAP, todo sobre el sueldo base, con las tasas de ParametroNomina.
 /// Todas las tasas se leen de ParametroNomina (no quemadas); aquí solo van los defaults
 /// de respaldo por si falta la fila.
@@ -290,7 +290,7 @@ public class NominaService
     }
 
     // ========================================================================
-    //  PROVISIONES (CUADRO KURT) PARA EL MES DEL PERÍODO
+    //  PROVISIONES (PASIVO LABORAL) PARA EL MES DEL PERÍODO
     // ========================================================================
     public async Task<ProvisionesResultadoDto> GenerarProvisionesAsync(int periodoId)
     {

@@ -112,7 +112,7 @@ public class NominaServiceTests
         Assert.Equal(1500m, bEspecial.TotalIngresos);
     }
 
-    // ---- Provisiones (cuadro Kurt) ----
+    // ---- Provisiones (pasivo laboral) ----
     [Fact]
     public async Task GenerarProvisiones_aplicaTasasSobreSueldoBase()
     {

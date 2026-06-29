@@ -118,7 +118,7 @@ public class PeriodosPagoController : ControllerBase
     public async Task<ActionResult<GenerarResultadoDto>> Generar(int id, [FromBody] GenerarPeriodoRequest? req = null)
         => Ok(await _nomina.GenerarAsync(id, req));
 
-    // POST /api/periodospago/{id}/provisiones — genera el cuadro Kurt del mes del período.
+    // POST /api/periodospago/{id}/provisiones — genera las provisiones del mes del período.
     [Authorize(Roles = "ADMIN,CONTABILIDAD")]
     [HttpPost("{id:int}/provisiones")]
     public async Task<ActionResult<ProvisionesResultadoDto>> Provisiones(int id)

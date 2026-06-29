@@ -368,7 +368,7 @@ CREATE TABLE dbo.ParametroNomina (
 );
 
 -- ============================================================================
--- 9. PROVISIÓN / PASIVO LABORAL  (histórico del "CUADRO KURT")
+-- 9. PROVISIÓN / PASIVO LABORAL  (histórico mensual)
 --    Una fila por empleado por mes con las provisiones acumuladas.
 -- ============================================================================
 
