@@ -22,7 +22,7 @@ public class UsuariosController : ControllerBase
         _db = db; _hasher = hasher;
     }
 
-    private static readonly string[] Roles = { "ADMIN", "CONTABILIDAD", "CAPTURA", "LECTURA" };
+    private static readonly string[] Roles = { "ADMIN", "CONTABILIDAD", "CAPTURA", "RRHH", "LECTURA" };
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll([FromQuery] bool soloActivos = true)
@@ -47,7 +47,7 @@ public class UsuariosController : ControllerBase
     public async Task<ActionResult<UsuarioDto>> Create(UsuarioCreateDto dto)
     {
         if (!Roles.Contains(dto.Rol))
-            return BadRequest("Rol debe ser 'ADMIN', 'CONTABILIDAD', 'CAPTURA' o 'LECTURA'.");
+            return BadRequest("Rol debe ser 'ADMIN', 'CONTABILIDAD', 'CAPTURA', 'RRHH' o 'LECTURA'.");
         if (await _db.Usuarios.AnyAsync(x => x.Email == dto.Email))
             return Conflict($"Ya existe un usuario con email '{dto.Email}'.");
         if (!string.IsNullOrEmpty(dto.Password) && dto.Password.Length < 8)
@@ -68,7 +68,7 @@ public class UsuariosController : ControllerBase
         var u = await _db.Usuarios.FindAsync(id);
         if (u is null) return NotFound();
         if (!Roles.Contains(dto.Rol))
-            return BadRequest("Rol debe ser 'ADMIN', 'CONTABILIDAD', 'CAPTURA' o 'LECTURA'.");
+            return BadRequest("Rol debe ser 'ADMIN', 'CONTABILIDAD', 'CAPTURA', 'RRHH' o 'LECTURA'.");
         if (await _db.Usuarios.AnyAsync(x => x.Email == dto.Email && x.UsuarioId != id))
             return Conflict($"Ya existe otro usuario con email '{dto.Email}'.");
 

@@ -8,11 +8,12 @@ import { IconPlus } from "@/components/icons";
 import { usePaginado, Paginacion } from "@/components/Paginacion";
 import type { Usuario, UsuarioCreate, Rol } from "@/lib/types";
 
-const ROLES: Rol[] = ["ADMIN", "CONTABILIDAD", "CAPTURA", "LECTURA"];
+const ROLES: Rol[] = ["ADMIN", "CONTABILIDAD", "CAPTURA", "RRHH", "LECTURA"];
 const ROL_DESC: Record<Rol, string> = {
   ADMIN: "Acceso total y gestión de usuarios",
   CONTABILIDAD: "Opera nómina y reportes",
   CAPTURA: "Captura datos",
+  RRHH: "Recursos Humanos (incluye desempeño)",
   LECTURA: "Solo consulta",
 };
 const VACIO: UsuarioCreate = { nombre: "", email: "", rol: "CAPTURA", password: "" };

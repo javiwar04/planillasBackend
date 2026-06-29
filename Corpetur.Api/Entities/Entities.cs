@@ -101,6 +101,22 @@ public class EmpleadoFormacion
     public DateTime CreadoEn { get; set; }
 }
 
+// Gestión del desempeño (DATO SENSIBLE: solo RRHH/ADMIN). Una fila por evento:
+// evaluación, amonestación, felicitación, promoción o capacitación interna.
+[Table("EventoDesempeno")]
+public class EventoDesempeno
+{
+    [Key] public int EventoDesempenoId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    public DateOnly Fecha { get; set; }
+    // EVALUACION | AMONESTACION | FELICITACION | PROMOCION | CAPACITACION
+    [MaxLength(20)] public string Tipo { get; set; } = null!;
+    [MaxLength(150)] public string Titulo { get; set; } = null!;
+    [MaxLength(500)] public string? Detalle { get; set; }
+    public DateTime CreadoEn { get; set; }
+}
+
 // Histórico de traslados de un empleado (establecimiento / departamento / puesto).
 // Guarda el valor anterior y el nuevo con fecha efectiva; el Empleado siempre
 // apunta al valor vigente.

@@ -135,6 +135,20 @@ CREATE TABLE dbo.EmpleadoFormacion (
 );
 CREATE INDEX IX_EmpleadoFormacion_Empleado ON dbo.EmpleadoFormacion(EmpleadoId);
 
+-- Gestión del desempeño (DATO SENSIBLE: la API solo lo expone a RRHH/ADMIN).
+-- Una fila por evento: evaluación, amonestación, felicitación, promoción o capacitación.
+CREATE TABLE dbo.EventoDesempeno (
+    EventoDesempenoId INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId        INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    Fecha             DATE NOT NULL,
+    Tipo              NVARCHAR(20) NOT NULL
+                      CONSTRAINT CK_Desempeno_Tipo CHECK (Tipo IN ('EVALUACION','AMONESTACION','FELICITACION','PROMOCION','CAPACITACION')),
+    Titulo            NVARCHAR(150) NOT NULL,
+    Detalle           NVARCHAR(500) NULL,
+    CreadoEn          DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_EventoDesempeno_Empleado ON dbo.EventoDesempeno(EmpleadoId);
+
 -- Vacaciones gozadas (períodos tomados por el empleado).
 CREATE TABLE dbo.Vacacion (
     VacacionId   INT IDENTITY(1,1) PRIMARY KEY,

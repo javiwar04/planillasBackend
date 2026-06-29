@@ -5,14 +5,25 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/lib/toast";
+import { useAuth } from "@/lib/auth";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import type {
   Empleado, BoletaLista, Periodo, Prestamo, Vacacion, Ausencia, EmpleadoMovimiento, Puesto,
-  Formacion, FormacionCreate, TipoFormacion,
+  Formacion, FormacionCreate, TipoFormacion, EventoDesempeno, EventoDesempenoCreate, TipoDesempeno,
 } from "@/lib/types";
 
-type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados" | "perfil";
+type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados" | "perfil" | "desempeno";
 const DIA = 86400000;
+const HOY_ISO = new Date().toISOString().slice(0, 10);
+
+const TIPOS_DESEMPENO: { value: TipoDesempeno; label: string; cls: string }[] = [
+  { value: "FELICITACION", label: "Felicitación", cls: "bg-emerald-100 text-emerald-700" },
+  { value: "EVALUACION", label: "Evaluación", cls: "bg-brand-100 text-brand-800" },
+  { value: "PROMOCION", label: "Promoción", cls: "bg-indigo-100 text-indigo-700" },
+  { value: "CAPACITACION", label: "Capacitación", cls: "bg-sky-100 text-sky-700" },
+  { value: "AMONESTACION", label: "Amonestación", cls: "bg-red-100 text-red-700" },
+];
+const tipoDesempeno = (t: string) => TIPOS_DESEMPENO.find((x) => x.value === t) ?? { label: t, cls: "bg-slate-100 text-slate-600" };
 
 const TIPOS_FORMACION: { value: TipoFormacion; label: string }[] = [
   { value: "IDIOMA", label: "Idioma" },
@@ -49,9 +60,48 @@ export default function ExpedientePage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("boletas");
   const toast = useToast();
+  const { usuario } = useAuth();
+  const esRRHH = usuario?.rol === "ADMIN" || usuario?.rol === "RRHH";
 
   const [nuevaForm, setNuevaForm] = useState<FormacionCreate>({ empleadoId: id, tipo: "IDIOMA", descripcion: "", detalle: "", anio: null });
   const [agregando, setAgregando] = useState(false);
+
+  // Desempeño: dato sensible, solo se carga para RRHH/ADMIN.
+  const [eventos, setEventos] = useState<EventoDesempeno[]>([]);
+  const [nuevoEvento, setNuevoEvento] = useState<EventoDesempenoCreate>({ empleadoId: id, fecha: HOY_ISO, tipo: "FELICITACION", titulo: "", detalle: "" });
+  const [agregandoEv, setAgregandoEv] = useState(false);
+
+  useEffect(() => {
+    if (!esRRHH) { setEventos([]); return; }
+    api<EventoDesempeno[]>(`/desempeno?empleadoId=${id}`).then(setEventos).catch(() => setEventos([]));
+  }, [esRRHH, id]);
+
+  async function agregarEvento(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!nuevoEvento.titulo.trim()) return;
+    setAgregandoEv(true);
+    try {
+      await api("/desempeno", { method: "POST", body: { ...nuevoEvento, titulo: nuevoEvento.titulo.trim(), detalle: nuevoEvento.detalle?.trim() || null } });
+      setNuevoEvento({ empleadoId: id, fecha: HOY_ISO, tipo: nuevoEvento.tipo, titulo: "", detalle: "" });
+      setEventos(await api<EventoDesempeno[]>(`/desempeno?empleadoId=${id}`));
+      toast.success("Evento registrado.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo registrar.");
+    } finally {
+      setAgregandoEv(false);
+    }
+  }
+
+  async function borrarEvento(eid: number) {
+    if (!confirm("¿Eliminar este registro de desempeño?")) return;
+    try {
+      await api(`/desempeno/${eid}`, { method: "DELETE" });
+      setEventos((es) => es.filter((x) => x.eventoDesempenoId !== eid));
+      toast.success("Eliminado.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo eliminar.");
+    }
+  }
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -194,6 +244,7 @@ export default function ExpedientePage() {
         <TabBtn a={tab === "ausencias"} on={() => setTab("ausencias")}>Ausencias</TabBtn>
         <TabBtn a={tab === "traslados"} on={() => setTab("traslados")}>Traslados</TabBtn>
         <TabBtn a={tab === "perfil"} on={() => setTab("perfil")}>Perfil</TabBtn>
+        {esRRHH && <TabBtn a={tab === "desempeno"} on={() => setTab("desempeno")}>Desempeño 🔒</TabBtn>}
       </div>
 
       <div className="card overflow-hidden">
@@ -318,6 +369,61 @@ export default function ExpedientePage() {
                         className="text-sm font-medium text-red-600 hover:underline">Quitar</button>
                     </li>
                   ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {tab === "desempeno" && esRRHH && (
+            <div className="p-5">
+              <p className="mb-4 text-xs text-amber-600">
+                🔒 Información confidencial de RRHH. Visible solo para Recursos Humanos y administradores.
+              </p>
+              <form onSubmit={agregarEvento} className="mb-5 flex flex-wrap items-end gap-2">
+                <label className="block">
+                  <span className="label">Tipo</span>
+                  <select className="input w-40" value={nuevoEvento.tipo}
+                    onChange={(e) => setNuevoEvento({ ...nuevoEvento, tipo: e.target.value as TipoDesempeno })}>
+                    {TIPOS_DESEMPENO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="label">Fecha</span>
+                  <input type="date" className="input" value={nuevoEvento.fecha}
+                    onChange={(e) => setNuevoEvento({ ...nuevoEvento, fecha: e.target.value })} />
+                </label>
+                <label className="block flex-1 min-w-48">
+                  <span className="label">Título</span>
+                  <input className="input" placeholder="ej. Reconocimiento al servicio"
+                    value={nuevoEvento.titulo} onChange={(e) => setNuevoEvento({ ...nuevoEvento, titulo: e.target.value })} />
+                </label>
+                <label className="block flex-1 min-w-48">
+                  <span className="label">Detalle</span>
+                  <input className="input" placeholder="Descripción / motivo"
+                    value={nuevoEvento.detalle ?? ""} onChange={(e) => setNuevoEvento({ ...nuevoEvento, detalle: e.target.value })} />
+                </label>
+                <button type="submit" disabled={agregandoEv} className="btn-primary">{agregandoEv ? "…" : "Registrar"}</button>
+              </form>
+
+              {eventos.length === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-400">Sin registros de desempeño.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {eventos.map((ev) => {
+                    const t = tipoDesempeno(ev.tipo);
+                    return (
+                      <li key={ev.eventoDesempenoId} className="flex items-start gap-3 py-2.5">
+                        <span className={`badge ${t.cls} mt-0.5`}>{t.label}</span>
+                        <span className="flex-1 text-sm">
+                          <span className="font-medium text-slate-800">{ev.titulo}</span>
+                          <span className="text-slate-400"> · {ev.fecha}</span>
+                          {ev.detalle && <span className="block text-slate-500">{ev.detalle}</span>}
+                        </span>
+                        <button onClick={() => borrarEvento(ev.eventoDesempenoId)}
+                          className="text-sm font-medium text-red-600 hover:underline">Quitar</button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

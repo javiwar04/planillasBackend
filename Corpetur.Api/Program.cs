@@ -53,7 +53,9 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
-    options.AddPolicy("Captura", p => p.RequireRole("ADMIN", "CONTABILIDAD", "CAPTURA"));
+    options.AddPolicy("Captura", p => p.RequireRole("ADMIN", "CONTABILIDAD", "CAPTURA", "RRHH"));
+    // Recursos Humanos: datos sensibles (desempeño). Solo ADMIN y RRHH.
+    options.AddPolicy("RecursosHumanos", p => p.RequireRole("ADMIN", "RRHH"));
 });
 
 builder.Services.AddControllers(o => o.Conventions.Add(new PermisosEscrituraConvention()))

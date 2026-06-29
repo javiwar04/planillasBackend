@@ -1,6 +1,6 @@
 // Tipos que reflejan los DTOs de la API CORPETUR.
 
-export type Rol = "ADMIN" | "CONTABILIDAD" | "CAPTURA" | "LECTURA";
+export type Rol = "ADMIN" | "CONTABILIDAD" | "CAPTURA" | "RRHH" | "LECTURA";
 
 export interface Usuario {
   usuarioId: number;
@@ -147,6 +147,23 @@ export interface FormacionCreate {
   descripcion: string;
   detalle?: string | null;
   anio?: number | null;
+}
+
+export type TipoDesempeno = "EVALUACION" | "AMONESTACION" | "FELICITACION" | "PROMOCION" | "CAPACITACION";
+export interface EventoDesempeno {
+  eventoDesempenoId: number;
+  empleadoId: number;
+  fecha: string;
+  tipo: TipoDesempeno;
+  titulo: string;
+  detalle?: string | null;
+}
+export interface EventoDesempenoCreate {
+  empleadoId: number;
+  fecha: string;
+  tipo: TipoDesempeno;
+  titulo: string;
+  detalle?: string | null;
 }
 
 export interface EmpleadoCreate {
