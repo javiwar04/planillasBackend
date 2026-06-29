@@ -125,6 +125,7 @@ public class ReportesController : ControllerBase
                 Nombre = d.Boleta.Empleado!.Nombres + " " + d.Boleta.Empleado.Apellidos,
                 d.Boleta.Empleado.Nit,
                 Establecimiento = d.Boleta.Empleado.Establecimiento!.Nombre,
+                DeduccionAdicional = d.Boleta.Empleado.IsrDeduccionAdicional,
                 Codigo = d.Concepto!.Codigo,
                 d.Concepto.Naturaleza,
                 d.Monto,
@@ -146,12 +147,13 @@ public class ReportesController : ControllerBase
                     else if (c == "ISR") retenido += x.Monto;
                     else if (x.Naturaleza == "INGRESO" && !exentos.Contains(c)) gravada += x.Monto;
                 }
-                var rentaNeta = Math.Max(0m, gravada - igss - ded);
+                var dedAdic = first.DeduccionAdicional;
+                var rentaNeta = Math.Max(0m, gravada - igss - ded - dedAdic);
                 var isr = rentaNeta <= limite1
                     ? R(rentaNeta * tasa1)
                     : R(base2 + (rentaNeta - limite1) * tasa2);
                 return new IsrAnualDto(g.Key, first.Nombre, first.Nit, first.Establecimiento,
-                    R(gravada), R(igss), R(ded), rentaNeta, isr, R(retenido), R(isr - retenido));
+                    R(gravada), R(igss), R(ded), R(dedAdic), rentaNeta, isr, R(retenido), R(isr - retenido));
             })
             .OrderBy(f => f.Nombre)
             .ToList();

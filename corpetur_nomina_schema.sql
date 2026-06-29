@@ -70,6 +70,7 @@ CREATE TABLE dbo.Empleado (
     TipoContrato        NVARCHAR(20)  NULL,   -- INDEFINIDO | TEMPORAL | POR_TEMPORADA | POR_OBRA
     Jornada             NVARCHAR(20)  NULL,   -- COMPLETA | PARCIAL
     ConvenioColectivo   NVARCHAR(120) NULL,
+    IsrDeduccionAdicional DECIMAL(14,2) NOT NULL DEFAULT 0,  -- deducción ISR extra anual (seguros, colegios, donaciones)
 
     SueldoBase          DECIMAL(14,2) NOT NULL DEFAULT 0, -- mensual; para EXTRA puede ser pago/día o referencia
     -- Anticipo estándar de quincena, acordado por persona. La mayoría = Q1,200;

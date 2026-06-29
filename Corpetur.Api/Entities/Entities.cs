@@ -63,6 +63,9 @@ public class Empleado
     [MaxLength(20)] public string? TipoContrato { get; set; }   // INDEFINIDO | TEMPORAL | POR_TEMPORADA | POR_OBRA
     [MaxLength(20)] public string? Jornada { get; set; }        // COMPLETA | PARCIAL
     [MaxLength(120)] public string? ConvenioColectivo { get; set; }
+    // Deducción ISR adicional anual de la persona (seguros, cuotas de colegio
+    // profesional, donaciones...), ADEMÁS de la deducción única. Resta en el cuadre.
+    [Column(TypeName = "decimal(14,2)")] public decimal IsrDeduccionAdicional { get; set; }
 
     [Column(TypeName = "decimal(14,2)")] public decimal SueldoBase { get; set; }
     // Anticipo estándar de quincena acordado por persona (default Q1,200 en SQL).
