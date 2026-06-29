@@ -7,6 +7,7 @@ import { api, ApiError, apiUpload, apiBlobUrl } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
+import { exportarExcelHojas, type HojaExcel } from "@/lib/excel";
 import type {
   Empleado, BoletaLista, Periodo, Prestamo, Vacacion, Ausencia, EmpleadoMovimiento, Puesto,
   Formacion, FormacionCreate, TipoFormacion, EventoDesempeno, EventoDesempenoCreate, TipoDesempeno,
@@ -246,6 +247,46 @@ export default function ExpedientePage() {
     return Math.round((15 * anios - vacaciones.reduce((s, v) => s + v.dias, 0)) * 100) / 100;
   }, [emp, vacaciones]);
 
+  function exportarKardex() {
+    if (!emp) return;
+    const kv = (campo: string, valor: string | number | null | undefined) => ({ Campo: campo, Valor: valor ?? "—" });
+    const datos = [
+      kv("Código", emp.codigo), kv("Nombres", emp.nombres), kv("Apellidos", emp.apellidos),
+      kv("NIT", emp.nit), kv("DPI", emp.dpi), kv("Tipo", emp.tipo),
+      kv("Establecimiento", emp.establecimientoNombre), kv("Departamento", emp.departamentoNombre), kv("Puesto", puesto),
+      kv("Supervisor", emp.supervisorEfectivo), kv("Tipo de contrato", etiquetaContrato(emp.tipoContrato)),
+      kv("Jornada", emp.jornada === "PARCIAL" ? "Parcial" : emp.jornada === "COMPLETA" ? "Completa" : "—"),
+      kv("Convenio colectivo", emp.convenioColectivo),
+      kv("Sueldo base", money(emp.sueldoBase)), kv("Quincena", money(emp.montoQuincena)),
+      kv("Banco", emp.banco), kv("Cuenta", emp.cuentaBanco),
+      kv("Teléfono", emp.telefono), kv("Correo", emp.email), kv("Dirección", emp.direccion),
+      kv("No. afiliación IGSS", emp.noAfiliacionIgss), kv("No. póliza seguro", emp.noPolizaSeguro), kv("Tipo de sangre", emp.tipoSangre),
+      kv("Contacto emergencia", emp.contactoEmergenciaNombre), kv("Parentesco", emp.contactoEmergenciaParentesco), kv("Tel. emergencia", emp.contactoEmergenciaTelefono),
+      kv("Aptitud médica vence", emp.aptitudMedicaVence), kv("Carnet manipulador vence", emp.carnetManipuladorVence), kv("Alergias", emp.alergias),
+      kv("Fecha ingreso", emp.fechaIngreso), kv("Fecha baja", emp.fechaBaja), kv("Activo", emp.activo ? "Sí" : "No"),
+    ];
+    const hojas: HojaExcel[] = [
+      { nombre: "Datos", filas: datos },
+      { nombre: "Perfil", filas: formaciones.map((f) => ({ Tipo: labelTipoFormacion(f.tipo), Descripción: f.descripcion, Detalle: f.detalle ?? "", Año: f.anio ?? "" })) },
+      { nombre: "Documentos", filas: documentos.map((d) => ({ Tipo: labelTipoDoc(d.tipo), Nombre: d.nombreOriginal, Tamaño: formatoBytes(d.tamanoBytes), Fecha: d.creadoEn.slice(0, 10) })) },
+      { nombre: "Vacaciones", filas: vacaciones.map((v) => ({ Desde: v.fechaInicio, Hasta: v.fechaFin, Días: v.dias, Observación: v.observacion ?? "" })) },
+      { nombre: "Ausencias", filas: ausencias.map((a) => ({ Tipo: a.tipo, Desde: a.fechaInicio, Hasta: a.fechaFin, Días: a.dias, Descontable: a.descontable ? "Sí" : "No" })) },
+      { nombre: "Traslados", filas: movs.map((m) => ({
+        Fecha: m.fecha,
+        Cambio: [m.establecimientoNuevo && `Estab: ${m.establecimientoAnterior ?? "—"} → ${m.establecimientoNuevo}`,
+          m.departamentoNuevo && `Depto: ${m.departamentoAnterior ?? "—"} → ${m.departamentoNuevo}`,
+          m.puestoNuevo && `Puesto: ${m.puestoAnterior ?? "—"} → ${m.puestoNuevo}`,
+          m.sueldoNuevo != null && `Sueldo: ${money(m.sueldoAnterior ?? 0)} → ${money(m.sueldoNuevo)}`].filter(Boolean).join(" · "),
+        Motivo: m.motivo ?? "",
+      })) },
+    ];
+    // El desempeño (sensible) solo se incluye si el usuario es RRHH/ADMIN.
+    if (esRRHH) {
+      hojas.push({ nombre: "Desempeño", filas: eventos.map((ev) => ({ Tipo: tipoDesempeno(ev.tipo).label, Fecha: ev.fecha, Título: ev.titulo, Detalle: ev.detalle ?? "" })) });
+    }
+    exportarExcelHojas(`kardex_${emp.apellidos}_${emp.nombres}`.replace(/\s+/g, "_"), hojas);
+  }
+
   if (cargando) return <div className="card p-10 text-center text-slate-400">Cargando…</div>;
   if (error) return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>;
   if (!emp) return null;
@@ -269,9 +310,12 @@ export default function ExpedientePage() {
             </div>
             </div>
           </div>
-          <a href={`/empleados/${emp.empleadoId}/constancia`} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
-            Constancia laboral
-          </a>
+          <div className="flex items-center gap-2">
+            <button onClick={exportarKardex} className="btn-ghost btn-sm">Kardex (Excel)</button>
+            <a href={`/empleados/${emp.empleadoId}/constancia`} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
+              Constancia laboral
+            </a>
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 text-sm sm:grid-cols-3">
           <Dato k="NIT" v={emp.nit ?? "—"} />

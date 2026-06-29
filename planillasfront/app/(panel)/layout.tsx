@@ -29,6 +29,12 @@ const GRUPOS: Grupo[] = [
     ],
   },
   {
+    titulo: "Recursos Humanos",
+    items: [
+      { href: "/rrhh", label: "Kardex de personal", icon: IconBriefcase },
+    ],
+  },
+  {
     titulo: "Catálogos",
     items: [
       { href: "/establecimientos", label: "Establecimientos", icon: IconBuilding },
