@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { money } from "@/lib/format";
 import { exportarExcel } from "@/lib/excel";
+import { exportarKardexExcel } from "@/lib/kardexExcel";
 import { SkeletonRows } from "@/components/Skeleton";
 import { usePaginado, Paginacion } from "@/components/Paginacion";
 import type { Empleado, Establecimiento, Puesto } from "@/lib/types";
@@ -137,13 +138,14 @@ export default function RrhhPage() {
                 <th className="th">Contrato</th>
                 <th className="th">Jornada</th>
                 <th className="th">Ingreso</th>
+                <th className="th text-right">Kardex</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cargando ? (
-                <SkeletonRows cols={7} />
+                <SkeletonRows cols={8} />
               ) : filtrados.length === 0 ? (
-                <tr><td colSpan={7} className="td py-10 text-center text-slate-400">Sin coincidencias.</td></tr>
+                <tr><td colSpan={8} className="td py-10 text-center text-slate-400">Sin coincidencias.</td></tr>
               ) : (
                 pag.visibles.map((e) => (
                   <tr key={e.empleadoId} className="hover:bg-slate-50">
@@ -160,6 +162,12 @@ export default function RrhhPage() {
                     <td className="td text-slate-600">{etiquetaContrato(e.tipoContrato)}</td>
                     <td className="td text-slate-600">{etiquetaJornada(e.jornada)}</td>
                     <td className="td text-slate-600">{e.fechaIngreso ?? "—"}</td>
+                    <td className="td text-right whitespace-nowrap">
+                      <button onClick={() => exportarKardexExcel(e, e.puestoId ? (puestos.get(e.puestoId) ?? "") : "").catch(() => {})}
+                        className="mr-3 font-medium text-brand-700 hover:underline">Excel</button>
+                      <a href={`/empleados/${e.empleadoId}/kardex`} target="_blank" rel="noopener noreferrer"
+                        className="font-medium text-slate-600 hover:underline">PDF</a>
+                    </td>
                   </tr>
                 ))
               )}
