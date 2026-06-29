@@ -16,6 +16,8 @@ const VACIO: EmpleadoCreate = {
   nombres: "", apellidos: "", nit: "", dpi: "", codigo: "",
   establecimientoId: 0, departamentoId: null, tipo: "PLANILLA",
   sueldoBase: 0, montoQuincena: 1200, banco: "", cuentaBanco: "", fechaIngreso: null,
+  telefono: "", email: "", direccion: "", noAfiliacionIgss: "", noPolizaSeguro: "", tipoSangre: "",
+  contactoEmergenciaNombre: "", contactoEmergenciaParentesco: "", contactoEmergenciaTelefono: "",
 };
 
 export default function EmpleadosPage() {
@@ -78,6 +80,11 @@ export default function EmpleadosPage() {
       departamentoId: e.departamentoId ?? null, puestoId: e.puestoId ?? null,
       tipo: e.tipo, sueldoBase: e.sueldoBase, montoQuincena: e.montoQuincena,
       banco: e.banco ?? "", cuentaBanco: e.cuentaBanco ?? "", fechaIngreso: e.fechaIngreso ?? null,
+      telefono: e.telefono ?? "", email: e.email ?? "", direccion: e.direccion ?? "",
+      noAfiliacionIgss: e.noAfiliacionIgss ?? "", noPolizaSeguro: e.noPolizaSeguro ?? "", tipoSangre: e.tipoSangre ?? "",
+      contactoEmergenciaNombre: e.contactoEmergenciaNombre ?? "",
+      contactoEmergenciaParentesco: e.contactoEmergenciaParentesco ?? "",
+      contactoEmergenciaTelefono: e.contactoEmergenciaTelefono ?? "",
     });
     setFormError(null);
     setModal(true);
@@ -87,13 +94,23 @@ export default function EmpleadosPage() {
     ev.preventDefault();
     setGuardando(true);
     setFormError(null);
+    const limpio = (v?: string | null) => v?.trim() || null;
     const payload: EmpleadoCreate = {
       ...form,
-      nit: form.nit?.trim() || null,
-      dpi: form.dpi?.trim() || null,
-      codigo: form.codigo?.trim() || null,
-      banco: form.banco?.trim() || null,
-      cuentaBanco: form.cuentaBanco?.trim() || null,
+      nit: limpio(form.nit),
+      dpi: limpio(form.dpi),
+      codigo: limpio(form.codigo),
+      banco: limpio(form.banco),
+      cuentaBanco: limpio(form.cuentaBanco),
+      telefono: limpio(form.telefono),
+      email: limpio(form.email),
+      direccion: limpio(form.direccion),
+      noAfiliacionIgss: limpio(form.noAfiliacionIgss),
+      noPolizaSeguro: limpio(form.noPolizaSeguro),
+      tipoSangre: limpio(form.tipoSangre),
+      contactoEmergenciaNombre: limpio(form.contactoEmergenciaNombre),
+      contactoEmergenciaParentesco: limpio(form.contactoEmergenciaParentesco),
+      contactoEmergenciaTelefono: limpio(form.contactoEmergenciaTelefono),
       fechaIngreso: form.fechaIngreso || null,
       departamentoId: form.departamentoId || null,
     };
@@ -242,7 +259,7 @@ export default function EmpleadosPage() {
 
       {modal && (
         <div className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="card w-full max-w-lg p-6">
+          <div className="card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6">
             <h2 className="mb-4 text-lg font-bold text-slate-900">
               {editId ? "Editar empleado" : "Nuevo empleado"}
             </h2>
@@ -319,6 +336,52 @@ export default function EmpleadosPage() {
                 <Campo label="Cuenta">
                   <input className="input" value={form.cuentaBanco ?? ""}
                     onChange={(e) => setForm({ ...form, cuentaBanco: e.target.value })} />
+                </Campo>
+
+                <div className="col-span-2 mt-1 border-t border-slate-200 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Datos de RRHH
+                </div>
+                <Campo label="Teléfono">
+                  <input className="input" value={form.telefono ?? ""}
+                    onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
+                </Campo>
+                <Campo label="Correo">
+                  <input type="email" className="input" value={form.email ?? ""}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </Campo>
+                <div className="col-span-2">
+                  <Campo label="Dirección">
+                    <input className="input" value={form.direccion ?? ""}
+                      onChange={(e) => setForm({ ...form, direccion: e.target.value })} />
+                  </Campo>
+                </div>
+                <Campo label="No. afiliación IGSS">
+                  <input className="input" value={form.noAfiliacionIgss ?? ""}
+                    onChange={(e) => setForm({ ...form, noAfiliacionIgss: e.target.value })} />
+                </Campo>
+                <Campo label="No. póliza de seguro">
+                  <input className="input" value={form.noPolizaSeguro ?? ""}
+                    onChange={(e) => setForm({ ...form, noPolizaSeguro: e.target.value })} />
+                </Campo>
+                <Campo label="Tipo de sangre">
+                  <input className="input" placeholder="ej. O+" value={form.tipoSangre ?? ""}
+                    onChange={(e) => setForm({ ...form, tipoSangre: e.target.value })} />
+                </Campo>
+
+                <div className="col-span-2 mt-1 border-t border-slate-200 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Contacto de emergencia
+                </div>
+                <Campo label="Nombre">
+                  <input className="input" value={form.contactoEmergenciaNombre ?? ""}
+                    onChange={(e) => setForm({ ...form, contactoEmergenciaNombre: e.target.value })} />
+                </Campo>
+                <Campo label="Parentesco">
+                  <input className="input" value={form.contactoEmergenciaParentesco ?? ""}
+                    onChange={(e) => setForm({ ...form, contactoEmergenciaParentesco: e.target.value })} />
+                </Campo>
+                <Campo label="Teléfono de emergencia">
+                  <input className="input" value={form.contactoEmergenciaTelefono ?? ""}
+                    onChange={(e) => setForm({ ...form, contactoEmergenciaTelefono: e.target.value })} />
                 </Campo>
               </div>
 

@@ -23,6 +23,15 @@ public record EmpleadoDto(
     decimal MontoQuincena,
     string? Banco,
     string? CuentaBanco,
+    string? Telefono,
+    string? Email,
+    string? Direccion,
+    string? NoAfiliacionIgss,
+    string? NoPolizaSeguro,
+    string? TipoSangre,
+    string? ContactoEmergenciaNombre,
+    string? ContactoEmergenciaParentesco,
+    string? ContactoEmergenciaTelefono,
     DateOnly? FechaIngreso,
     DateOnly? FechaBaja,
     bool Activo);
@@ -41,6 +50,15 @@ public record EmpleadoCreateDto(
     decimal MontoQuincena,
     string? Banco,
     string? CuentaBanco,
+    string? Telefono,
+    string? Email,
+    string? Direccion,
+    string? NoAfiliacionIgss,
+    string? NoPolizaSeguro,
+    string? TipoSangre,
+    string? ContactoEmergenciaNombre,
+    string? ContactoEmergenciaParentesco,
+    string? ContactoEmergenciaTelefono,
     DateOnly? FechaIngreso);
 
 // --- Reportes ---

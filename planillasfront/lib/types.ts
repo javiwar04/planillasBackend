@@ -115,6 +115,15 @@ export interface Empleado {
   montoQuincena: number;
   banco?: string | null;
   cuentaBanco?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  direccion?: string | null;
+  noAfiliacionIgss?: string | null;
+  noPolizaSeguro?: string | null;
+  tipoSangre?: string | null;
+  contactoEmergenciaNombre?: string | null;
+  contactoEmergenciaParentesco?: string | null;
+  contactoEmergenciaTelefono?: string | null;
   fechaIngreso?: string | null;
   fechaBaja?: string | null;
   activo: boolean;
@@ -134,6 +143,15 @@ export interface EmpleadoCreate {
   montoQuincena: number;
   banco?: string | null;
   cuentaBanco?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  direccion?: string | null;
+  noAfiliacionIgss?: string | null;
+  noPolizaSeguro?: string | null;
+  tipoSangre?: string | null;
+  contactoEmergenciaNombre?: string | null;
+  contactoEmergenciaParentesco?: string | null;
+  contactoEmergenciaTelefono?: string | null;
   fechaIngreso?: string | null;
 }
 

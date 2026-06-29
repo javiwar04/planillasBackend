@@ -60,6 +60,17 @@ public class Empleado
     [MaxLength(60)] public string? Banco { get; set; }
     [MaxLength(40)] public string? CuentaBanco { get; set; }
 
+    // --- Recursos Humanos (datos del colaborador) ---
+    [MaxLength(30)] public string? Telefono { get; set; }
+    [MaxLength(120)] public string? Email { get; set; }
+    [MaxLength(250)] public string? Direccion { get; set; }
+    [MaxLength(30)] public string? NoAfiliacionIgss { get; set; }
+    [MaxLength(40)] public string? NoPolizaSeguro { get; set; }
+    [MaxLength(5)] public string? TipoSangre { get; set; }
+    [MaxLength(120)] public string? ContactoEmergenciaNombre { get; set; }
+    [MaxLength(50)] public string? ContactoEmergenciaParentesco { get; set; }
+    [MaxLength(30)] public string? ContactoEmergenciaTelefono { get; set; }
+
     public DateOnly? FechaIngreso { get; set; }
     public DateOnly? FechaBaja { get; set; }
     public bool Activo { get; set; } = true;

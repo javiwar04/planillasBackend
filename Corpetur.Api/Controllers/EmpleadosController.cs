@@ -82,7 +82,13 @@ public class EmpleadosController : ControllerBase
             Dpi = dto.Dpi, Nit = dto.Nit,
             EstablecimientoId = dto.EstablecimientoId, DepartamentoId = dto.DepartamentoId, PuestoId = dto.PuestoId,
             Tipo = dto.Tipo, SueldoBase = dto.SueldoBase, MontoQuincena = dto.MontoQuincena,
-            Banco = dto.Banco, CuentaBanco = dto.CuentaBanco, FechaIngreso = dto.FechaIngreso
+            Banco = dto.Banco, CuentaBanco = dto.CuentaBanco,
+            Telefono = dto.Telefono, Email = dto.Email, Direccion = dto.Direccion,
+            NoAfiliacionIgss = dto.NoAfiliacionIgss, NoPolizaSeguro = dto.NoPolizaSeguro, TipoSangre = dto.TipoSangre,
+            ContactoEmergenciaNombre = dto.ContactoEmergenciaNombre,
+            ContactoEmergenciaParentesco = dto.ContactoEmergenciaParentesco,
+            ContactoEmergenciaTelefono = dto.ContactoEmergenciaTelefono,
+            FechaIngreso = dto.FechaIngreso
         };
         _db.Empleados.Add(e);
         await _db.SaveChangesAsync();
@@ -107,7 +113,13 @@ public class EmpleadosController : ControllerBase
         e.Dpi = dto.Dpi; e.Nit = dto.Nit;
         e.EstablecimientoId = dto.EstablecimientoId; e.DepartamentoId = dto.DepartamentoId; e.PuestoId = dto.PuestoId;
         e.Tipo = dto.Tipo; e.SueldoBase = dto.SueldoBase; e.MontoQuincena = dto.MontoQuincena;
-        e.Banco = dto.Banco; e.CuentaBanco = dto.CuentaBanco; e.FechaIngreso = dto.FechaIngreso;
+        e.Banco = dto.Banco; e.CuentaBanco = dto.CuentaBanco;
+        e.Telefono = dto.Telefono; e.Email = dto.Email; e.Direccion = dto.Direccion;
+        e.NoAfiliacionIgss = dto.NoAfiliacionIgss; e.NoPolizaSeguro = dto.NoPolizaSeguro; e.TipoSangre = dto.TipoSangre;
+        e.ContactoEmergenciaNombre = dto.ContactoEmergenciaNombre;
+        e.ContactoEmergenciaParentesco = dto.ContactoEmergenciaParentesco;
+        e.ContactoEmergenciaTelefono = dto.ContactoEmergenciaTelefono;
+        e.FechaIngreso = dto.FechaIngreso;
         e.ActualizadoEn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return NoContent();
@@ -211,5 +223,7 @@ public class EmpleadosController : ControllerBase
         e.EstablecimientoId, e.Establecimiento?.Nombre,
         e.DepartamentoId, e.Departamento?.Nombre,
         e.PuestoId, e.Tipo, e.SueldoBase, e.MontoQuincena, e.Banco, e.CuentaBanco,
+        e.Telefono, e.Email, e.Direccion, e.NoAfiliacionIgss, e.NoPolizaSeguro, e.TipoSangre,
+        e.ContactoEmergenciaNombre, e.ContactoEmergenciaParentesco, e.ContactoEmergenciaTelefono,
         e.FechaIngreso, e.FechaBaja, e.Activo);
 }

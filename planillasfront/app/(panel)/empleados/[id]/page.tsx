@@ -104,6 +104,25 @@ export default function ExpedientePage() {
         </div>
       </div>
 
+      {/* Datos personales y de RRHH */}
+      <div className="card p-5">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Datos personales y de RRHH</div>
+        <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-1 text-sm sm:grid-cols-3">
+          <Dato k="Teléfono" v={emp.telefono ?? "—"} />
+          <Dato k="Correo" v={emp.email ?? "—"} />
+          <Dato k="Dirección" v={emp.direccion ?? "—"} />
+          <Dato k="No. afiliación IGSS" v={emp.noAfiliacionIgss ?? "—"} />
+          <Dato k="No. póliza seguro" v={emp.noPolizaSeguro ?? "—"} />
+          <Dato k="Tipo de sangre" v={emp.tipoSangre ?? "—"} />
+          <Dato
+            k="Contacto emergencia"
+            v={emp.contactoEmergenciaNombre
+              ? `${emp.contactoEmergenciaNombre}${emp.contactoEmergenciaParentesco ? ` (${emp.contactoEmergenciaParentesco})` : ""}${emp.contactoEmergenciaTelefono ? ` · ${emp.contactoEmergenciaTelefono}` : ""}`
+              : "—"}
+          />
+        </div>
+      </div>
+
       {/* Resumen */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Tarjeta titulo="Líquido histórico" valor={money(totalLiquido)} sub={`${boletas.length} boletas`} />
