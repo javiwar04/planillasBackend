@@ -70,6 +70,9 @@ export default function DashboardPage() {
   // Alertas de datos por revisar.
   const sinNit = empleados.filter((e) => e.tipo === "PLANILLA" && !e.nit).length;
   const sinCuenta = empleados.filter((e) => !e.cuentaBanco).length;
+  // Documentos médicos vencidos o por vencer en ≤30 días (aptitud / carnet manipulador).
+  const porVencer = (f?: string | null) => f != null && (new Date(f).getTime() - Date.now()) / 86400000 <= 30;
+  const docsPorVencer = empleados.filter((e) => porVencer(e.aptitudMedicaVence) || porVencer(e.carnetManipuladorVence)).length;
 
   // Tendencia del neto por mes (períodos FIN_MES, últimos 6).
   const [trend, setTrend] = useState<{ label: string; neto: number }[]>([]);
@@ -207,7 +210,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Por revisar */}
-          {(sinNit > 0 || sinCuenta > 0) && (
+          {(sinNit > 0 || sinCuenta > 0 || docsPorVencer > 0) && (
             <div className="card p-5">
               <h2 className="mb-2 font-semibold text-slate-900">Por revisar</h2>
               <ul className="space-y-1 text-sm">
@@ -221,6 +224,12 @@ export default function DashboardPage() {
                   <li className="flex justify-between">
                     <Link href="/empleados" className="text-amber-700 hover:underline">Sin cuenta bancaria</Link>
                     <span className="font-semibold text-amber-700">{sinCuenta}</span>
+                  </li>
+                )}
+                {docsPorVencer > 0 && (
+                  <li className="flex justify-between">
+                    <Link href="/empleados" className="text-red-700 hover:underline">Aptitud/carnet por vencer (≤30 d)</Link>
+                    <span className="font-semibold text-red-700">{docsPorVencer}</span>
                   </li>
                 )}
               </ul>

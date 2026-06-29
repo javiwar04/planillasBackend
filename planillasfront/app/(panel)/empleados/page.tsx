@@ -18,6 +18,7 @@ const VACIO: EmpleadoCreate = {
   sueldoBase: 0, montoQuincena: 1200, banco: "", cuentaBanco: "", fechaIngreso: null,
   telefono: "", email: "", direccion: "", noAfiliacionIgss: "", noPolizaSeguro: "", tipoSangre: "",
   contactoEmergenciaNombre: "", contactoEmergenciaParentesco: "", contactoEmergenciaTelefono: "",
+  aptitudMedicaVence: null, carnetManipuladorVence: null, alergias: "",
 };
 
 export default function EmpleadosPage() {
@@ -85,6 +86,9 @@ export default function EmpleadosPage() {
       contactoEmergenciaNombre: e.contactoEmergenciaNombre ?? "",
       contactoEmergenciaParentesco: e.contactoEmergenciaParentesco ?? "",
       contactoEmergenciaTelefono: e.contactoEmergenciaTelefono ?? "",
+      aptitudMedicaVence: e.aptitudMedicaVence ?? null,
+      carnetManipuladorVence: e.carnetManipuladorVence ?? null,
+      alergias: e.alergias ?? "",
     });
     setFormError(null);
     setModal(true);
@@ -111,6 +115,9 @@ export default function EmpleadosPage() {
       contactoEmergenciaNombre: limpio(form.contactoEmergenciaNombre),
       contactoEmergenciaParentesco: limpio(form.contactoEmergenciaParentesco),
       contactoEmergenciaTelefono: limpio(form.contactoEmergenciaTelefono),
+      aptitudMedicaVence: form.aptitudMedicaVence || null,
+      carnetManipuladorVence: form.carnetManipuladorVence || null,
+      alergias: limpio(form.alergias),
       fechaIngreso: form.fechaIngreso || null,
       departamentoId: form.departamentoId || null,
     };
@@ -383,6 +390,24 @@ export default function EmpleadosPage() {
                   <input className="input" value={form.contactoEmergenciaTelefono ?? ""}
                     onChange={(e) => setForm({ ...form, contactoEmergenciaTelefono: e.target.value })} />
                 </Campo>
+
+                <div className="col-span-2 mt-1 border-t border-slate-200 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Datos médicos
+                </div>
+                <Campo label="Aptitud médica vence">
+                  <input type="date" className="input" value={form.aptitudMedicaVence ?? ""}
+                    onChange={(e) => setForm({ ...form, aptitudMedicaVence: e.target.value || null })} />
+                </Campo>
+                <Campo label="Carnet manipulador vence">
+                  <input type="date" className="input" value={form.carnetManipuladorVence ?? ""}
+                    onChange={(e) => setForm({ ...form, carnetManipuladorVence: e.target.value || null })} />
+                </Campo>
+                <div className="col-span-2">
+                  <Campo label="Alergias / condiciones">
+                    <input className="input" value={form.alergias ?? ""}
+                      onChange={(e) => setForm({ ...form, alergias: e.target.value })} />
+                  </Campo>
+                </div>
               </div>
 
               {form.tipo === "PLANILLA" && !form.nit?.trim() && (

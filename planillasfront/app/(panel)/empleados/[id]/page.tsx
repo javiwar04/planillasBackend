@@ -4,13 +4,33 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import type {
   Empleado, BoletaLista, Periodo, Prestamo, Vacacion, Ausencia, EmpleadoMovimiento, Puesto,
+  Formacion, FormacionCreate, TipoFormacion,
 } from "@/lib/types";
 
-type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados";
+type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados" | "perfil";
 const DIA = 86400000;
+
+const TIPOS_FORMACION: { value: TipoFormacion; label: string }[] = [
+  { value: "IDIOMA", label: "Idioma" },
+  { value: "TITULO", label: "Título" },
+  { value: "CURSO", label: "Curso" },
+  { value: "CERTIFICACION", label: "Certificación" },
+  { value: "HABILIDAD", label: "Habilidad" },
+];
+const labelTipoFormacion = (t: string) => TIPOS_FORMACION.find((x) => x.value === t)?.label ?? t;
+
+// Estado de un documento con vencimiento: vencido / por vencer (≤30 días) / vigente.
+function vencEstado(fecha?: string | null): { txt: string; cls: string } | null {
+  if (!fecha) return null;
+  const dias = Math.floor((new Date(fecha).getTime() - Date.now()) / 86400000);
+  if (dias < 0) return { txt: "Vencido", cls: "bg-red-100 text-red-700" };
+  if (dias <= 30) return { txt: `Vence en ${dias} d`, cls: "bg-amber-100 text-amber-700" };
+  return { txt: "Vigente", cls: "bg-emerald-100 text-emerald-700" };
+}
 
 export default function ExpedientePage() {
   const params = useParams<{ id: string }>();
@@ -24,15 +44,20 @@ export default function ExpedientePage() {
   const [vacaciones, setVacaciones] = useState<Vacacion[]>([]);
   const [ausencias, setAusencias] = useState<Ausencia[]>([]);
   const [movs, setMovs] = useState<EmpleadoMovimiento[]>([]);
+  const [formaciones, setFormaciones] = useState<Formacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("boletas");
+  const toast = useToast();
+
+  const [nuevaForm, setNuevaForm] = useState<FormacionCreate>({ empleadoId: id, tipo: "IDIOMA", descripcion: "", detalle: "", anio: null });
+  const [agregando, setAgregando] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
     setError(null);
     try {
-      const [e, bol, pers, pres, vac, aus, mv, pue] = await Promise.all([
+      const [e, bol, pers, pres, vac, aus, mv, pue, forms] = await Promise.all([
         api<Empleado>(`/empleados/${id}`),
         api<BoletaLista[]>(`/boletas?empleadoId=${id}`),
         api<Periodo[]>("/periodospago"),
@@ -41,6 +66,7 @@ export default function ExpedientePage() {
         api<Ausencia[]>(`/ausencias?empleadoId=${id}`),
         api<EmpleadoMovimiento[]>(`/empleados/${id}/movimientos`),
         api<Puesto[]>("/puestos"),
+        api<Formacion[]>(`/formaciones?empleadoId=${id}`),
       ]);
       setEmp(e);
       setBoletas(bol);
@@ -49,6 +75,7 @@ export default function ExpedientePage() {
       setVacaciones(vac);
       setAusencias(aus);
       setMovs(mv);
+      setFormaciones(forms);
       setPuesto(pue.find((p) => p.puestoId === e.puestoId)?.nombre ?? "");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar el expediente.");
@@ -58,6 +85,32 @@ export default function ExpedientePage() {
   }, [id]);
 
   useEffect(() => { cargar(); }, [cargar]);
+
+  async function agregarFormacion(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!nuevaForm.descripcion.trim()) return;
+    setAgregando(true);
+    try {
+      await api("/formaciones", { method: "POST", body: { ...nuevaForm, descripcion: nuevaForm.descripcion.trim(), detalle: nuevaForm.detalle?.trim() || null, anio: nuevaForm.anio || null } });
+      setNuevaForm({ empleadoId: id, tipo: nuevaForm.tipo, descripcion: "", detalle: "", anio: null });
+      setFormaciones(await api<Formacion[]>(`/formaciones?empleadoId=${id}`));
+      toast.success("Agregado al perfil.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo agregar.");
+    } finally {
+      setAgregando(false);
+    }
+  }
+
+  async function borrarFormacion(fid: number) {
+    try {
+      await api(`/formaciones/${fid}`, { method: "DELETE" });
+      setFormaciones((fs) => fs.filter((f) => f.empleadoFormacionId !== fid));
+      toast.success("Eliminado del perfil.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo eliminar.");
+    }
+  }
 
   const totalLiquido = useMemo(() => boletas.reduce((s, b) => s + b.liquido, 0), [boletas]);
   const saldoPrestamos = useMemo(
@@ -120,6 +173,9 @@ export default function ExpedientePage() {
               ? `${emp.contactoEmergenciaNombre}${emp.contactoEmergenciaParentesco ? ` (${emp.contactoEmergenciaParentesco})` : ""}${emp.contactoEmergenciaTelefono ? ` · ${emp.contactoEmergenciaTelefono}` : ""}`
               : "—"}
           />
+          <DatoVence k="Aptitud médica" fecha={emp.aptitudMedicaVence} />
+          <DatoVence k="Carnet manipulador" fecha={emp.carnetManipuladorVence} />
+          <Dato k="Alergias" v={emp.alergias ?? "—"} />
         </div>
       </div>
 
@@ -137,6 +193,7 @@ export default function ExpedientePage() {
         <TabBtn a={tab === "vacaciones"} on={() => setTab("vacaciones")}>Vacaciones</TabBtn>
         <TabBtn a={tab === "ausencias"} on={() => setTab("ausencias")}>Ausencias</TabBtn>
         <TabBtn a={tab === "traslados"} on={() => setTab("traslados")}>Traslados</TabBtn>
+        <TabBtn a={tab === "perfil"} on={() => setTab("perfil")}>Perfil</TabBtn>
       </div>
 
       <div className="card overflow-hidden">
@@ -216,6 +273,55 @@ export default function ExpedientePage() {
               ))}
             </Tabla>
           )}
+
+          {tab === "perfil" && (
+            <div className="p-5">
+              <form onSubmit={agregarFormacion} className="mb-5 flex flex-wrap items-end gap-2">
+                <label className="block">
+                  <span className="label">Tipo</span>
+                  <select className="input w-40" value={nuevaForm.tipo}
+                    onChange={(e) => setNuevaForm({ ...nuevaForm, tipo: e.target.value as TipoFormacion })}>
+                    {TIPOS_FORMACION.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </label>
+                <label className="block flex-1 min-w-48">
+                  <span className="label">Descripción</span>
+                  <input className="input" placeholder="ej. Inglés / Lic. Administración"
+                    value={nuevaForm.descripcion} onChange={(e) => setNuevaForm({ ...nuevaForm, descripcion: e.target.value })} />
+                </label>
+                <label className="block flex-1 min-w-40">
+                  <span className="label">Detalle</span>
+                  <input className="input" placeholder="ej. Avanzado / institución"
+                    value={nuevaForm.detalle ?? ""} onChange={(e) => setNuevaForm({ ...nuevaForm, detalle: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="label">Año</span>
+                  <input type="number" className="input w-24" value={nuevaForm.anio ?? ""}
+                    onChange={(e) => setNuevaForm({ ...nuevaForm, anio: Number(e.target.value) || null })} />
+                </label>
+                <button type="submit" disabled={agregando} className="btn-primary">{agregando ? "…" : "Agregar"}</button>
+              </form>
+
+              {formaciones.length === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-400">Sin idiomas, títulos ni certificaciones registrados.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {formaciones.map((f) => (
+                    <li key={f.empleadoFormacionId} className="flex items-center gap-3 py-2.5">
+                      <span className="badge bg-brand-50 text-brand-700">{labelTipoFormacion(f.tipo)}</span>
+                      <span className="flex-1 text-sm">
+                        <span className="font-medium text-slate-800">{f.descripcion}</span>
+                        {f.detalle && <span className="text-slate-500"> · {f.detalle}</span>}
+                        {f.anio && <span className="text-slate-400"> · {f.anio}</span>}
+                      </span>
+                      <button onClick={() => borrarFormacion(f.empleadoFormacionId)}
+                        className="text-sm font-medium text-red-600 hover:underline">Quitar</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -224,6 +330,16 @@ export default function ExpedientePage() {
 
 function Dato({ k, v }: { k: string; v: string }) {
   return <div className="flex gap-2"><span className="font-semibold text-slate-500">{k}:</span><span className="text-slate-800">{v}</span></div>;
+}
+function DatoVence({ k, fecha }: { k: string; fecha?: string | null }) {
+  const est = vencEstado(fecha);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="font-semibold text-slate-500">{k}:</span>
+      <span className="text-slate-800">{fecha ?? "—"}</span>
+      {est && <span className={`badge ${est.cls}`}>{est.txt}</span>}
+    </div>
+  );
 }
 function Tarjeta({ titulo, valor, sub, destacado }: { titulo: string; valor: string; sub?: string; destacado?: boolean }) {
   return (

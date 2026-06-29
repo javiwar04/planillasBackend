@@ -71,12 +71,34 @@ public class Empleado
     [MaxLength(50)] public string? ContactoEmergenciaParentesco { get; set; }
     [MaxLength(30)] public string? ContactoEmergenciaTelefono { get; set; }
 
+    // --- Datos médicos / prevención de riesgos ---
+    public DateOnly? AptitudMedicaVence { get; set; }       // certificado de aptitud médica
+    public DateOnly? CarnetManipuladorVence { get; set; }   // carnet de manipulador de alimentos
+    [MaxLength(250)] public string? Alergias { get; set; }
+
     public DateOnly? FechaIngreso { get; set; }
     public DateOnly? FechaBaja { get; set; }
     public bool Activo { get; set; } = true;
 
     public DateTime CreadoEn { get; set; }
     public DateTime? ActualizadoEn { get; set; }
+}
+
+// Perfil profesional del colaborador (catálogo flexible: una fila por idioma,
+// título, curso, certificación o habilidad). Igual que los conceptos, NO se usan
+// columnas fijas: agregar un idioma = insertar fila.
+[Table("EmpleadoFormacion")]
+public class EmpleadoFormacion
+{
+    [Key] public int EmpleadoFormacionId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    // IDIOMA | TITULO | CURSO | CERTIFICACION | HABILIDAD
+    [MaxLength(20)] public string Tipo { get; set; } = null!;
+    [MaxLength(150)] public string Descripcion { get; set; } = null!;  // ej. "Inglés", "Lic. Administración"
+    [MaxLength(150)] public string? Detalle { get; set; }              // ej. "Avanzado", institución
+    public int? Anio { get; set; }
+    public DateTime CreadoEn { get; set; }
 }
 
 // Histórico de traslados de un empleado (establecimiento / departamento / puesto).

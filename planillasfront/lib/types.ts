@@ -124,9 +124,29 @@ export interface Empleado {
   contactoEmergenciaNombre?: string | null;
   contactoEmergenciaParentesco?: string | null;
   contactoEmergenciaTelefono?: string | null;
+  aptitudMedicaVence?: string | null;
+  carnetManipuladorVence?: string | null;
+  alergias?: string | null;
   fechaIngreso?: string | null;
   fechaBaja?: string | null;
   activo: boolean;
+}
+
+export type TipoFormacion = "IDIOMA" | "TITULO" | "CURSO" | "CERTIFICACION" | "HABILIDAD";
+export interface Formacion {
+  empleadoFormacionId: number;
+  empleadoId: number;
+  tipo: TipoFormacion;
+  descripcion: string;
+  detalle?: string | null;
+  anio?: number | null;
+}
+export interface FormacionCreate {
+  empleadoId: number;
+  tipo: TipoFormacion;
+  descripcion: string;
+  detalle?: string | null;
+  anio?: number | null;
 }
 
 export interface EmpleadoCreate {
@@ -152,6 +172,9 @@ export interface EmpleadoCreate {
   contactoEmergenciaNombre?: string | null;
   contactoEmergenciaParentesco?: string | null;
   contactoEmergenciaTelefono?: string | null;
+  aptitudMedicaVence?: string | null;
+  carnetManipuladorVence?: string | null;
+  alergias?: string | null;
   fechaIngreso?: string | null;
 }
 

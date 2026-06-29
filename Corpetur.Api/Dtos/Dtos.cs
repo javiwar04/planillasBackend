@@ -32,6 +32,9 @@ public record EmpleadoDto(
     string? ContactoEmergenciaNombre,
     string? ContactoEmergenciaParentesco,
     string? ContactoEmergenciaTelefono,
+    DateOnly? AptitudMedicaVence,
+    DateOnly? CarnetManipuladorVence,
+    string? Alergias,
     DateOnly? FechaIngreso,
     DateOnly? FechaBaja,
     bool Activo);
@@ -59,7 +62,14 @@ public record EmpleadoCreateDto(
     string? ContactoEmergenciaNombre,
     string? ContactoEmergenciaParentesco,
     string? ContactoEmergenciaTelefono,
+    DateOnly? AptitudMedicaVence,
+    DateOnly? CarnetManipuladorVence,
+    string? Alergias,
     DateOnly? FechaIngreso);
+
+// --- Perfil profesional (idiomas / formación / certificaciones) ---
+public record FormacionDto(int EmpleadoFormacionId, int EmpleadoId, string Tipo, string Descripcion, string? Detalle, int? Anio);
+public record FormacionCreateDto(int EmpleadoId, string Tipo, string Descripcion, string? Detalle, int? Anio);
 
 // --- Reportes ---
 // Una fila de la Declaración Jurada Anual (formato SAT): acumulado del año por

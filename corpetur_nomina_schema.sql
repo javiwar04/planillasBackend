@@ -82,6 +82,11 @@ CREATE TABLE dbo.Empleado (
     ContactoEmergenciaParentesco NVARCHAR(50)  NULL,
     ContactoEmergenciaTelefono   NVARCHAR(30)  NULL,
 
+    -- Datos médicos / prevención de riesgos.
+    AptitudMedicaVence           DATE          NULL,       -- vence certificado de aptitud
+    CarnetManipuladorVence       DATE          NULL,       -- vence carnet de manipulador de alimentos
+    Alergias                     NVARCHAR(250) NULL,
+
     FechaIngreso        DATE          NULL,
     FechaBaja           DATE          NULL,
     Activo              BIT           NOT NULL DEFAULT 1,
@@ -115,6 +120,20 @@ CREATE TABLE dbo.EmpleadoMovimiento (
     CreadoEn                  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 CREATE INDEX IX_EmpleadoMovimiento_Empleado ON dbo.EmpleadoMovimiento(EmpleadoId);
+
+-- Perfil profesional (idiomas, títulos, cursos, certificaciones, habilidades).
+-- Catálogo flexible: una fila por ítem (no columnas fijas).
+CREATE TABLE dbo.EmpleadoFormacion (
+    EmpleadoFormacionId INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId          INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    Tipo                NVARCHAR(20) NOT NULL
+                        CONSTRAINT CK_Formacion_Tipo CHECK (Tipo IN ('IDIOMA','TITULO','CURSO','CERTIFICACION','HABILIDAD')),
+    Descripcion         NVARCHAR(150) NOT NULL,   -- ej. "Inglés", "Lic. Administración"
+    Detalle             NVARCHAR(150) NULL,       -- ej. "Avanzado", institución
+    Anio                INT NULL,
+    CreadoEn            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_EmpleadoFormacion_Empleado ON dbo.EmpleadoFormacion(EmpleadoId);
 
 -- Vacaciones gozadas (períodos tomados por el empleado).
 CREATE TABLE dbo.Vacacion (
