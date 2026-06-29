@@ -20,6 +20,10 @@ const TIPOS_DOC: { value: TipoDocumento; label: string }[] = [
   { value: "TITULO", label: "Título" }, { value: "CERTIFICADO", label: "Certificado" }, { value: "OTRO", label: "Otro" },
 ];
 const labelTipoDoc = (t: string) => TIPOS_DOC.find((x) => x.value === t)?.label ?? t;
+const CONTRATOS: Record<string, string> = {
+  INDEFINIDO: "Indefinido", TEMPORAL: "Temporal", POR_TEMPORADA: "Por temporada", POR_OBRA: "Por obra",
+};
+const etiquetaContrato = (t?: string | null) => (t ? CONTRATOS[t] ?? t : "—");
 const formatoBytes = (n: number) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1048576).toFixed(1)} MB`;
 const DIA = 86400000;
 const HOY_ISO = new Date().toISOString().slice(0, 10);
@@ -273,6 +277,10 @@ export default function ExpedientePage() {
           <Dato k="NIT" v={emp.nit ?? "—"} />
           <Dato k="DPI" v={emp.dpi ?? "—"} />
           <Dato k="Departamento" v={emp.departamentoNombre ?? "—"} />
+          <Dato k="Supervisor" v={emp.supervisorEfectivo ?? "—"} />
+          <Dato k="Tipo de contrato" v={etiquetaContrato(emp.tipoContrato)} />
+          <Dato k="Jornada" v={emp.jornada === "PARCIAL" ? "Parcial" : emp.jornada === "COMPLETA" ? "Completa" : "—"} />
+          {emp.convenioColectivo && <Dato k="Convenio" v={emp.convenioColectivo} />}
           <Dato k="Sueldo base" v={money(emp.sueldoBase)} />
           {emp.tipo === "PLANILLA" && <Dato k="Quincena" v={money(emp.montoQuincena)} />}
           <Dato k="Ingreso" v={emp.fechaIngreso ?? "—"} />

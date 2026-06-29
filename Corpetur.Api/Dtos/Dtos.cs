@@ -1,7 +1,7 @@
 namespace Corpetur.Api.Dtos;
 
-public record EstablecimientoDto(int EstablecimientoId, string Codigo, string Nombre, bool EsEntidadContable, bool Activo);
-public record EstablecimientoCreateDto(string Codigo, string Nombre, bool EsEntidadContable);
+public record EstablecimientoDto(int EstablecimientoId, string Codigo, string Nombre, bool EsEntidadContable, string? Encargado, bool Activo);
+public record EstablecimientoCreateDto(string Codigo, string Nombre, bool EsEntidadContable, string? Encargado);
 
 public record ConceptoDto(int ConceptoId, string Codigo, string Nombre, string Naturaleza, bool EsCalculado, int Orden, bool Activo);
 public record ConceptoCreateDto(string Codigo, string Nombre, string Naturaleza, bool EsCalculado, int Orden);
@@ -23,6 +23,11 @@ public record EmpleadoDto(
     decimal MontoQuincena,
     string? Banco,
     string? CuentaBanco,
+    string? Supervisor,
+    string? SupervisorEfectivo,
+    string? TipoContrato,
+    string? Jornada,
+    string? ConvenioColectivo,
     string? Telefono,
     string? Email,
     string? Direccion,
@@ -53,6 +58,10 @@ public record EmpleadoCreateDto(
     decimal MontoQuincena,
     string? Banco,
     string? CuentaBanco,
+    string? Supervisor,
+    string? TipoContrato,
+    string? Jornada,
+    string? ConvenioColectivo,
     string? Telefono,
     string? Email,
     string? Direccion,

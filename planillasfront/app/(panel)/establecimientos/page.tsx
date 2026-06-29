@@ -13,15 +13,17 @@ export default function EstablecimientosPage() {
       idKey="establecimientoId"
       textoNuevo="Nuevo establecimiento"
       deleteLabel="Desactivar"
-      vacio={{ codigo: "", nombre: "", esEntidadContable: false }}
+      vacio={{ codigo: "", nombre: "", esEntidadContable: false, encargado: "" }}
       campos={[
         { name: "codigo", label: "Código", required: true },
         { name: "nombre", label: "Nombre", required: true, span: 2 },
+        { name: "encargado", label: "Encargado / supervisor", span: 2, hint: "Supervisor por defecto de quienes trabajan aquí." },
         { name: "esEntidadContable", label: "Es entidad contable (consolidación)", type: "checkbox" },
       ]}
       columnas={[
         { label: "Código", render: (e) => <span className="font-mono text-xs text-slate-500">{e.codigo}</span> },
         { label: "Nombre", render: (e) => <span className="font-medium text-slate-900">{e.nombre}</span> },
+        { label: "Encargado", render: (e) => <span className="text-slate-600">{e.encargado ?? "—"}</span> },
         { label: "Tipo", render: (e) => e.esEntidadContable
           ? <span className="badge bg-amber-100 text-amber-700">Contable</span>
           : <span className="badge bg-slate-100 text-slate-600">Operativo</span> },

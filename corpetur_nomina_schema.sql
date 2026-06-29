@@ -30,6 +30,7 @@ CREATE TABLE dbo.Establecimiento (
     -- consolidación (Total Petén, Corpetur, Corpetur Guatemala). Esta bandera
     -- las distingue para que no contaminen reportes operativos.
     EsEntidadContable   BIT           NOT NULL DEFAULT 0,
+    Encargado           NVARCHAR(120) NULL,   -- supervisor por defecto de la unidad
     Activo              BIT           NOT NULL DEFAULT 1
 );
 
@@ -63,6 +64,12 @@ CREATE TABLE dbo.Empleado (
     -- EXTRA      = pago en efectivo, desglose simplificado, sin IGSS/ISR.
     Tipo                NVARCHAR(10)  NOT NULL
                         CONSTRAINT CK_Empleado_Tipo CHECK (Tipo IN ('PLANILLA','EXTRA')),
+
+    -- Datos contractuales. Supervisor = override; si va NULL, manda el Encargado del establecimiento.
+    Supervisor          NVARCHAR(120) NULL,
+    TipoContrato        NVARCHAR(20)  NULL,   -- INDEFINIDO | TEMPORAL | POR_TEMPORADA | POR_OBRA
+    Jornada             NVARCHAR(20)  NULL,   -- COMPLETA | PARCIAL
+    ConvenioColectivo   NVARCHAR(120) NULL,
 
     SueldoBase          DECIMAL(14,2) NOT NULL DEFAULT 0, -- mensual; para EXTRA puede ser pago/día o referencia
     -- Anticipo estándar de quincena, acordado por persona. La mayoría = Q1,200;

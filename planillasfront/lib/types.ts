@@ -39,6 +39,7 @@ export interface Establecimiento {
   codigo: string;
   nombre: string;
   esEntidadContable: boolean;
+  encargado?: string | null;
   activo: boolean;
 }
 
@@ -115,6 +116,11 @@ export interface Empleado {
   montoQuincena: number;
   banco?: string | null;
   cuentaBanco?: string | null;
+  supervisor?: string | null;
+  supervisorEfectivo?: string | null;
+  tipoContrato?: string | null;
+  jornada?: string | null;
+  convenioColectivo?: string | null;
   telefono?: string | null;
   email?: string | null;
   direccion?: string | null;
@@ -191,6 +197,10 @@ export interface EmpleadoCreate {
   montoQuincena: number;
   banco?: string | null;
   cuentaBanco?: string | null;
+  supervisor?: string | null;
+  tipoContrato?: string | null;
+  jornada?: string | null;
+  convenioColectivo?: string | null;
   telefono?: string | null;
   email?: string | null;
   direccion?: string | null;

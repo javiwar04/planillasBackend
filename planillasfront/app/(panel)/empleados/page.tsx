@@ -16,6 +16,7 @@ const VACIO: EmpleadoCreate = {
   nombres: "", apellidos: "", nit: "", dpi: "", codigo: "",
   establecimientoId: 0, departamentoId: null, tipo: "PLANILLA",
   sueldoBase: 0, montoQuincena: 1200, banco: "", cuentaBanco: "", fechaIngreso: null,
+  supervisor: "", tipoContrato: "", jornada: "", convenioColectivo: "",
   telefono: "", email: "", direccion: "", noAfiliacionIgss: "", noPolizaSeguro: "", tipoSangre: "",
   contactoEmergenciaNombre: "", contactoEmergenciaParentesco: "", contactoEmergenciaTelefono: "",
   aptitudMedicaVence: null, carnetManipuladorVence: null, alergias: "",
@@ -81,6 +82,7 @@ export default function EmpleadosPage() {
       departamentoId: e.departamentoId ?? null, puestoId: e.puestoId ?? null,
       tipo: e.tipo, sueldoBase: e.sueldoBase, montoQuincena: e.montoQuincena,
       banco: e.banco ?? "", cuentaBanco: e.cuentaBanco ?? "", fechaIngreso: e.fechaIngreso ?? null,
+      supervisor: e.supervisor ?? "", tipoContrato: e.tipoContrato ?? "", jornada: e.jornada ?? "", convenioColectivo: e.convenioColectivo ?? "",
       telefono: e.telefono ?? "", email: e.email ?? "", direccion: e.direccion ?? "",
       noAfiliacionIgss: e.noAfiliacionIgss ?? "", noPolizaSeguro: e.noPolizaSeguro ?? "", tipoSangre: e.tipoSangre ?? "",
       contactoEmergenciaNombre: e.contactoEmergenciaNombre ?? "",
@@ -106,6 +108,10 @@ export default function EmpleadosPage() {
       codigo: limpio(form.codigo),
       banco: limpio(form.banco),
       cuentaBanco: limpio(form.cuentaBanco),
+      supervisor: limpio(form.supervisor),
+      tipoContrato: limpio(form.tipoContrato),
+      jornada: limpio(form.jornada),
+      convenioColectivo: limpio(form.convenioColectivo),
       telefono: limpio(form.telefono),
       email: limpio(form.email),
       direccion: limpio(form.direccion),
@@ -343,6 +349,36 @@ export default function EmpleadosPage() {
                 <Campo label="Cuenta">
                   <input className="input" value={form.cuentaBanco ?? ""}
                     onChange={(e) => setForm({ ...form, cuentaBanco: e.target.value })} />
+                </Campo>
+
+                <div className="col-span-2 mt-1 border-t border-slate-200 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Datos contractuales
+                </div>
+                <Campo label="Tipo de contrato">
+                  <select className="input" value={form.tipoContrato ?? ""}
+                    onChange={(e) => setForm({ ...form, tipoContrato: e.target.value })}>
+                    <option value="">—</option>
+                    <option value="INDEFINIDO">Indefinido</option>
+                    <option value="TEMPORAL">Temporal</option>
+                    <option value="POR_TEMPORADA">Por temporada</option>
+                    <option value="POR_OBRA">Por obra</option>
+                  </select>
+                </Campo>
+                <Campo label="Jornada">
+                  <select className="input" value={form.jornada ?? ""}
+                    onChange={(e) => setForm({ ...form, jornada: e.target.value })}>
+                    <option value="">—</option>
+                    <option value="COMPLETA">Completa</option>
+                    <option value="PARCIAL">Parcial</option>
+                  </select>
+                </Campo>
+                <Campo label="Supervisor directo">
+                  <input className="input" placeholder="Vacío = encargado del establecimiento"
+                    value={form.supervisor ?? ""} onChange={(e) => setForm({ ...form, supervisor: e.target.value })} />
+                </Campo>
+                <Campo label="Convenio colectivo">
+                  <input className="input" value={form.convenioColectivo ?? ""}
+                    onChange={(e) => setForm({ ...form, convenioColectivo: e.target.value })} />
                 </Campo>
 
                 <div className="col-span-2 mt-1 border-t border-slate-200 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">

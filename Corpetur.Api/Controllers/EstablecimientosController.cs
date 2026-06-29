@@ -19,7 +19,7 @@ public class EstablecimientosController : ControllerBase
         var q = _db.Establecimientos.AsNoTracking().AsQueryable();
         if (soloActivos) q = q.Where(e => e.Activo);
         var list = await q.OrderBy(e => e.Nombre)
-            .Select(e => new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Activo))
+            .Select(e => new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Encargado, e.Activo))
             .ToListAsync();
         return Ok(list);
     }
@@ -29,7 +29,7 @@ public class EstablecimientosController : ControllerBase
     {
         var e = await _db.Establecimientos.FindAsync(id);
         if (e is null) return NotFound();
-        return new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Activo);
+        return new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Encargado, e.Activo);
     }
 
     [HttpPost]
@@ -38,11 +38,11 @@ public class EstablecimientosController : ControllerBase
         if (await _db.Establecimientos.AnyAsync(x => x.Codigo == dto.Codigo))
             return Conflict($"Ya existe un establecimiento con código '{dto.Codigo}'.");
 
-        var e = new Establecimiento { Codigo = dto.Codigo, Nombre = dto.Nombre, EsEntidadContable = dto.EsEntidadContable };
+        var e = new Establecimiento { Codigo = dto.Codigo, Nombre = dto.Nombre, EsEntidadContable = dto.EsEntidadContable, Encargado = dto.Encargado };
         _db.Establecimientos.Add(e);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Get), new { id = e.EstablecimientoId },
-            new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Activo));
+            new EstablecimientoDto(e.EstablecimientoId, e.Codigo, e.Nombre, e.EsEntidadContable, e.Encargado, e.Activo));
     }
 
     [HttpPut("{id:int}")]
@@ -50,7 +50,7 @@ public class EstablecimientosController : ControllerBase
     {
         var e = await _db.Establecimientos.FindAsync(id);
         if (e is null) return NotFound();
-        e.Codigo = dto.Codigo; e.Nombre = dto.Nombre; e.EsEntidadContable = dto.EsEntidadContable;
+        e.Codigo = dto.Codigo; e.Nombre = dto.Nombre; e.EsEntidadContable = dto.EsEntidadContable; e.Encargado = dto.Encargado;
         await _db.SaveChangesAsync();
         return NoContent();
     }

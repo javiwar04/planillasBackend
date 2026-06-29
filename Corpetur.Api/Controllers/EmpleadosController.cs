@@ -83,6 +83,7 @@ public class EmpleadosController : ControllerBase
             EstablecimientoId = dto.EstablecimientoId, DepartamentoId = dto.DepartamentoId, PuestoId = dto.PuestoId,
             Tipo = dto.Tipo, SueldoBase = dto.SueldoBase, MontoQuincena = dto.MontoQuincena,
             Banco = dto.Banco, CuentaBanco = dto.CuentaBanco,
+            Supervisor = dto.Supervisor, TipoContrato = dto.TipoContrato, Jornada = dto.Jornada, ConvenioColectivo = dto.ConvenioColectivo,
             Telefono = dto.Telefono, Email = dto.Email, Direccion = dto.Direccion,
             NoAfiliacionIgss = dto.NoAfiliacionIgss, NoPolizaSeguro = dto.NoPolizaSeguro, TipoSangre = dto.TipoSangre,
             ContactoEmergenciaNombre = dto.ContactoEmergenciaNombre,
@@ -117,6 +118,7 @@ public class EmpleadosController : ControllerBase
         e.EstablecimientoId = dto.EstablecimientoId; e.DepartamentoId = dto.DepartamentoId; e.PuestoId = dto.PuestoId;
         e.Tipo = dto.Tipo; e.SueldoBase = dto.SueldoBase; e.MontoQuincena = dto.MontoQuincena;
         e.Banco = dto.Banco; e.CuentaBanco = dto.CuentaBanco;
+        e.Supervisor = dto.Supervisor; e.TipoContrato = dto.TipoContrato; e.Jornada = dto.Jornada; e.ConvenioColectivo = dto.ConvenioColectivo;
         e.Telefono = dto.Telefono; e.Email = dto.Email; e.Direccion = dto.Direccion;
         e.NoAfiliacionIgss = dto.NoAfiliacionIgss; e.NoPolizaSeguro = dto.NoPolizaSeguro; e.TipoSangre = dto.TipoSangre;
         e.ContactoEmergenciaNombre = dto.ContactoEmergenciaNombre;
@@ -229,6 +231,10 @@ public class EmpleadosController : ControllerBase
         e.EstablecimientoId, e.Establecimiento?.Nombre,
         e.DepartamentoId, e.Departamento?.Nombre,
         e.PuestoId, e.Tipo, e.SueldoBase, e.MontoQuincena, e.Banco, e.CuentaBanco,
+        e.Supervisor,
+        // Supervisor efectivo: el override del empleado o, si no hay, el encargado del establecimiento.
+        string.IsNullOrWhiteSpace(e.Supervisor) ? e.Establecimiento?.Encargado : e.Supervisor,
+        e.TipoContrato, e.Jornada, e.ConvenioColectivo,
         e.Telefono, e.Email, e.Direccion, e.NoAfiliacionIgss, e.NoPolizaSeguro, e.TipoSangre,
         e.ContactoEmergenciaNombre, e.ContactoEmergenciaParentesco, e.ContactoEmergenciaTelefono,
         e.AptitudMedicaVence, e.CarnetManipuladorVence, e.Alergias,

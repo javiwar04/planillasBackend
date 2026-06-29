@@ -15,6 +15,9 @@ public class Establecimiento
     [MaxLength(20)] public string Codigo { get; set; } = null!;
     [MaxLength(150)] public string Nombre { get; set; } = null!;
     public bool EsEntidadContable { get; set; }
+    // Encargado / supervisor de la unidad. Por defecto es el supervisor de quienes
+    // trabajan aquí (cada empleado puede tener un override propio).
+    [MaxLength(120)] public string? Encargado { get; set; }
     public bool Activo { get; set; } = true;
 
     public ICollection<Empleado> Empleados { get; set; } = new List<Empleado>();
@@ -52,6 +55,14 @@ public class Empleado
     public Puesto? Puesto { get; set; }
 
     [MaxLength(10)] public string Tipo { get; set; } = "PLANILLA"; // PLANILLA | EXTRA
+
+    // --- Datos contractuales ---
+    // Supervisor directo (override). Si va null, el supervisor efectivo es el
+    // Encargado del establecimiento del empleado.
+    [MaxLength(120)] public string? Supervisor { get; set; }
+    [MaxLength(20)] public string? TipoContrato { get; set; }   // INDEFINIDO | TEMPORAL | POR_TEMPORADA | POR_OBRA
+    [MaxLength(20)] public string? Jornada { get; set; }        // COMPLETA | PARCIAL
+    [MaxLength(120)] public string? ConvenioColectivo { get; set; }
 
     [Column(TypeName = "decimal(14,2)")] public decimal SueldoBase { get; set; }
     // Anticipo estándar de quincena acordado por persona (default Q1,200 en SQL).
