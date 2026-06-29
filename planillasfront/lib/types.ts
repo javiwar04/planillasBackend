@@ -166,6 +166,17 @@ export interface EventoDesempenoCreate {
   detalle?: string | null;
 }
 
+export type TipoDocumento = "FOTO" | "DPI" | "CONTRATO" | "TITULO" | "CERTIFICADO" | "OTRO";
+export interface Documento {
+  empleadoDocumentoId: number;
+  empleadoId: number;
+  tipo: TipoDocumento;
+  nombreOriginal: string;
+  contentType: string;
+  tamanoBytes: number;
+  creadoEn: string;
+}
+
 export interface EmpleadoCreate {
   codigo?: string | null;
   nombres: string;

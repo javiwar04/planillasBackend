@@ -3,16 +3,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, apiUpload, apiBlobUrl } from "@/lib/api";
 import { useToast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
 import { money, mesNombre, tipoPeriodoLabel } from "@/lib/format";
 import type {
   Empleado, BoletaLista, Periodo, Prestamo, Vacacion, Ausencia, EmpleadoMovimiento, Puesto,
   Formacion, FormacionCreate, TipoFormacion, EventoDesempeno, EventoDesempenoCreate, TipoDesempeno,
+  Documento, TipoDocumento,
 } from "@/lib/types";
 
-type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados" | "perfil" | "desempeno";
+type Tab = "boletas" | "prestamos" | "vacaciones" | "ausencias" | "traslados" | "perfil" | "desempeno" | "documentos";
+
+const TIPOS_DOC: { value: TipoDocumento; label: string }[] = [
+  { value: "FOTO", label: "Foto" }, { value: "DPI", label: "DPI" }, { value: "CONTRATO", label: "Contrato" },
+  { value: "TITULO", label: "Título" }, { value: "CERTIFICADO", label: "Certificado" }, { value: "OTRO", label: "Otro" },
+];
+const labelTipoDoc = (t: string) => TIPOS_DOC.find((x) => x.value === t)?.label ?? t;
+const formatoBytes = (n: number) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1048576).toFixed(1)} MB`;
 const DIA = 86400000;
 const HOY_ISO = new Date().toISOString().slice(0, 10);
 
@@ -66,6 +74,67 @@ export default function ExpedientePage() {
   const [nuevaForm, setNuevaForm] = useState<FormacionCreate>({ empleadoId: id, tipo: "IDIOMA", descripcion: "", detalle: "", anio: null });
   const [agregando, setAgregando] = useState(false);
 
+  // Documentos adjuntos + foto.
+  const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [tipoDoc, setTipoDoc] = useState<TipoDocumento>("DPI");
+  const [subiendo, setSubiendo] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+
+  const cargarDocs = useCallback(async () => {
+    try { setDocumentos(await api<Documento[]>(`/documentos?empleadoId=${id}`)); }
+    catch { /* sin documentos */ }
+  }, [id]);
+
+  // Carga la foto más reciente (si hay) como object URL para el encabezado.
+  useEffect(() => {
+    const foto = documentos.filter((d) => d.tipo === "FOTO")[0];
+    if (!foto) { setFotoUrl(null); return; }
+    let url: string | null = null;
+    apiBlobUrl(`/documentos/${foto.empleadoDocumentoId}/contenido`).then((u) => { url = u; setFotoUrl(u); }).catch(() => {});
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [documentos]);
+
+  async function subirDocumento(ev: React.ChangeEvent<HTMLInputElement>) {
+    const file = ev.target.files?.[0];
+    ev.target.value = "";
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("El archivo supera 10 MB."); return; }
+    setSubiendo(true);
+    try {
+      const fd = new FormData();
+      fd.append("empleadoId", String(id));
+      fd.append("tipo", tipoDoc);
+      fd.append("archivo", file);
+      await apiUpload("/documentos", fd);
+      await cargarDocs();
+      toast.success("Documento subido.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo subir.");
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  async function verDocumento(doc: Documento) {
+    try {
+      const url = await apiBlobUrl(`/documentos/${doc.empleadoDocumentoId}/contenido`);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo abrir.");
+    }
+  }
+
+  async function borrarDocumento(docId: number) {
+    if (!confirm("¿Eliminar este documento?")) return;
+    try {
+      await api(`/documentos/${docId}`, { method: "DELETE" });
+      setDocumentos((ds) => ds.filter((d) => d.empleadoDocumentoId !== docId));
+      toast.success("Documento eliminado.");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "No se pudo eliminar.");
+    }
+  }
+
   // Desempeño: dato sensible, solo se carga para RRHH/ADMIN.
   const [eventos, setEventos] = useState<EventoDesempeno[]>([]);
   const [nuevoEvento, setNuevoEvento] = useState<EventoDesempenoCreate>({ empleadoId: id, fecha: HOY_ISO, tipo: "FELICITACION", titulo: "", detalle: "" });
@@ -107,7 +176,7 @@ export default function ExpedientePage() {
     setCargando(true);
     setError(null);
     try {
-      const [e, bol, pers, pres, vac, aus, mv, pue, forms] = await Promise.all([
+      const [e, bol, pers, pres, vac, aus, mv, pue, forms, docs] = await Promise.all([
         api<Empleado>(`/empleados/${id}`),
         api<BoletaLista[]>(`/boletas?empleadoId=${id}`),
         api<Periodo[]>("/periodospago"),
@@ -117,6 +186,7 @@ export default function ExpedientePage() {
         api<EmpleadoMovimiento[]>(`/empleados/${id}/movimientos`),
         api<Puesto[]>("/puestos"),
         api<Formacion[]>(`/formaciones?empleadoId=${id}`),
+        api<Documento[]>(`/documentos?empleadoId=${id}`),
       ]);
       setEmp(e);
       setBoletas(bol);
@@ -126,6 +196,7 @@ export default function ExpedientePage() {
       setAusencias(aus);
       setMovs(mv);
       setFormaciones(forms);
+      setDocumentos(docs);
       setPuesto(pue.find((p) => p.puestoId === e.puestoId)?.nombre ?? "");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar el expediente.");
@@ -182,13 +253,16 @@ export default function ExpedientePage() {
       {/* Encabezado */}
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-4">
+            <Avatar url={fotoUrl} nombres={emp.nombres} apellidos={emp.apellidos} />
+            <div>
             <h1 className="text-2xl font-bold text-slate-900">{emp.nombres} {emp.apellidos}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
               <span className={`badge ${emp.tipo === "PLANILLA" ? "bg-brand-100 text-brand-800" : "bg-amber-100 text-amber-700"}`}>{emp.tipo}</span>
               <span className={`badge ${emp.activo ? "bg-brand-100 text-brand-800" : "bg-slate-100 text-slate-500"}`}>{emp.activo ? "Activo" : "Baja"}</span>
               <span>{emp.establecimientoNombre}</span>
               {puesto && <span>· {puesto}</span>}
+            </div>
             </div>
           </div>
           <a href={`/empleados/${emp.empleadoId}/constancia`} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
@@ -244,6 +318,7 @@ export default function ExpedientePage() {
         <TabBtn a={tab === "ausencias"} on={() => setTab("ausencias")}>Ausencias</TabBtn>
         <TabBtn a={tab === "traslados"} on={() => setTab("traslados")}>Traslados</TabBtn>
         <TabBtn a={tab === "perfil"} on={() => setTab("perfil")}>Perfil</TabBtn>
+        <TabBtn a={tab === "documentos"} on={() => setTab("documentos")}>Documentos</TabBtn>
         {esRRHH && <TabBtn a={tab === "desempeno"} on={() => setTab("desempeno")}>Desempeño 🔒</TabBtn>}
       </div>
 
@@ -374,6 +449,43 @@ export default function ExpedientePage() {
             </div>
           )}
 
+          {tab === "documentos" && (
+            <div className="p-5">
+              <div className="mb-5 flex flex-wrap items-end gap-2">
+                <label className="block">
+                  <span className="label">Tipo</span>
+                  <select className="input w-44" value={tipoDoc} onChange={(e) => setTipoDoc(e.target.value as TipoDocumento)}>
+                    {TIPOS_DOC.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </label>
+                <label className="btn-primary cursor-pointer">
+                  {subiendo ? "Subiendo…" : "Subir archivo"}
+                  <input type="file" className="hidden" disabled={subiendo}
+                    accept="image/*,application/pdf,.doc,.docx" onChange={subirDocumento} />
+                </label>
+                <span className="text-xs text-slate-400">Imagen, PDF o Word · máx 10 MB</span>
+              </div>
+
+              {documentos.length === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-400">Sin documentos adjuntos.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {documentos.map((d) => (
+                    <li key={d.empleadoDocumentoId} className="flex items-center gap-3 py-2.5">
+                      <span className="badge bg-slate-100 text-slate-600">{labelTipoDoc(d.tipo)}</span>
+                      <span className="flex-1 text-sm">
+                        <span className="font-medium text-slate-800">{d.nombreOriginal}</span>
+                        <span className="text-slate-400"> · {formatoBytes(d.tamanoBytes)} · {d.creadoEn.slice(0, 10)}</span>
+                      </span>
+                      <button onClick={() => verDocumento(d)} className="text-sm font-medium text-brand-700 hover:underline">Ver</button>
+                      <button onClick={() => borrarDocumento(d.empleadoDocumentoId)} className="text-sm font-medium text-red-600 hover:underline">Quitar</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           {tab === "desempeno" && esRRHH && (
             <div className="p-5">
               <p className="mb-4 text-xs text-amber-600">
@@ -434,6 +546,18 @@ export default function ExpedientePage() {
   );
 }
 
+function Avatar({ url, nombres, apellidos }: { url: string | null; nombres: string; apellidos: string }) {
+  const iniciales = `${nombres.charAt(0)}${apellidos.charAt(0)}`.toUpperCase();
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} alt={`${nombres} ${apellidos}`} className="h-16 w-16 flex-none rounded-full object-cover ring-2 ring-slate-100" />;
+  }
+  return (
+    <div className="flex h-16 w-16 flex-none items-center justify-center rounded-full bg-brand-100 text-xl font-bold text-brand-700 ring-2 ring-slate-100">
+      {iniciales}
+    </div>
+  );
+}
 function Dato({ k, v }: { k: string; v: string }) {
   return <div className="flex gap-2"><span className="font-semibold text-slate-500">{k}:</span><span className="text-slate-800">{v}</span></div>;
 }

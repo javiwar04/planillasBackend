@@ -75,6 +75,9 @@ public record FormacionCreateDto(int EmpleadoId, string Tipo, string Descripcion
 public record EventoDesempenoDto(int EventoDesempenoId, int EmpleadoId, DateOnly Fecha, string Tipo, string Titulo, string? Detalle);
 public record EventoDesempenoCreateDto(int EmpleadoId, DateOnly Fecha, string Tipo, string Titulo, string? Detalle);
 
+// --- Documentos adjuntos ---
+public record DocumentoDto(int EmpleadoDocumentoId, int EmpleadoId, string Tipo, string NombreOriginal, string ContentType, long TamanoBytes, DateTime CreadoEn);
+
 // --- Reportes ---
 // Una fila de la Declaración Jurada Anual (formato SAT): acumulado del año por
 // colaborador de PLANILLA, separando cada tipo de ingreso en su casilla.

@@ -14,6 +14,7 @@ public class CorpeturDbContext : DbContext
     public DbSet<EmpleadoMovimiento> EmpleadoMovimientos => Set<EmpleadoMovimiento>();
     public DbSet<EmpleadoFormacion> Formaciones => Set<EmpleadoFormacion>();
     public DbSet<EventoDesempeno> EventosDesempeno => Set<EventoDesempeno>();
+    public DbSet<EmpleadoDocumento> Documentos => Set<EmpleadoDocumento>();
     public DbSet<Vacacion> Vacaciones => Set<Vacacion>();
     public DbSet<Ausencia> Ausencias => Set<Ausencia>();
     public DbSet<PeriodoPago> PeriodosPago => Set<PeriodoPago>();

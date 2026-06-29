@@ -84,3 +84,45 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   if (!ct.includes("application/json")) return undefined as T;
   return (await res.json()) as T;
 }
+
+// Maneja 401 igual que api(): limpia sesión y manda al login.
+function manejar401() {
+  clearSession();
+  if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+    sessionStorage.setItem("corpetur_sesion_expirada", "1");
+    window.location.href = "/login";
+  }
+  throw new ApiError("Sesión expirada o no autorizada.", 401);
+}
+
+async function lanzarError(res: Response): Promise<never> {
+  let msg = `Error ${res.status}`;
+  try { const data = await res.json(); msg = data.error ?? data.title ?? msg; }
+  catch { const txt = await res.text().catch(() => ""); if (txt) msg = txt; }
+  throw new ApiError(msg, res.status);
+}
+
+// Sube un archivo (multipart). No fija Content-Type: el navegador pone el boundary.
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { method: "POST", headers, body: formData });
+  if (res.status === 401) manejar401();
+  if (!res.ok) await lanzarError(res);
+  if (res.status === 204) return undefined as T;
+  const ct = res.headers.get("content-type") ?? "";
+  return ct.includes("application/json") ? ((await res.json()) as T) : (undefined as T);
+}
+
+// Descarga un binario protegido (con token) y devuelve un object URL para
+// usarlo en <img>, vista previa o descarga. Recuerda revocar el URL al terminar.
+export async function apiBlobUrl(path: string): Promise<string> {
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  if (res.status === 401) manejar401();
+  if (!res.ok) await lanzarError(res);
+  return URL.createObjectURL(await res.blob());
+}

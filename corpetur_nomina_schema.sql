@@ -149,6 +149,21 @@ CREATE TABLE dbo.EventoDesempeno (
 );
 CREATE INDEX IX_EventoDesempeno_Empleado ON dbo.EventoDesempeno(EmpleadoId);
 
+-- Documentos adjuntos (foto, DPI, contrato, títulos...). El binario vive en disco;
+-- aquí va solo la metadata + el nombre del archivo en la carpeta de almacenamiento.
+CREATE TABLE dbo.EmpleadoDocumento (
+    EmpleadoDocumentoId INT IDENTITY(1,1) PRIMARY KEY,
+    EmpleadoId          INT NOT NULL REFERENCES dbo.Empleado(EmpleadoId),
+    Tipo                NVARCHAR(20) NOT NULL
+                        CONSTRAINT CK_Documento_Tipo CHECK (Tipo IN ('FOTO','DPI','CONTRATO','TITULO','CERTIFICADO','OTRO')),
+    NombreOriginal      NVARCHAR(255) NOT NULL,
+    NombreArchivo       NVARCHAR(255) NOT NULL,   -- nombre en disco (guid + ext)
+    ContentType         NVARCHAR(120) NOT NULL,
+    TamanoBytes         BIGINT NOT NULL,
+    CreadoEn            DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+CREATE INDEX IX_EmpleadoDocumento_Empleado ON dbo.EmpleadoDocumento(EmpleadoId);
+
 -- Vacaciones gozadas (períodos tomados por el empleado).
 CREATE TABLE dbo.Vacacion (
     VacacionId   INT IDENTITY(1,1) PRIMARY KEY,

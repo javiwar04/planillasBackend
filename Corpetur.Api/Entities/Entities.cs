@@ -101,6 +101,23 @@ public class EmpleadoFormacion
     public DateTime CreadoEn { get; set; }
 }
 
+// Documentos adjuntos del colaborador (foto, DPI, contrato, títulos, etc.). El
+// archivo vive en disco (carpeta de almacenamiento); aquí va solo la metadata.
+[Table("EmpleadoDocumento")]
+public class EmpleadoDocumento
+{
+    [Key] public int EmpleadoDocumentoId { get; set; }
+    public int EmpleadoId { get; set; }
+    public Empleado? Empleado { get; set; }
+    // FOTO | DPI | CONTRATO | TITULO | CERTIFICADO | OTRO
+    [MaxLength(20)] public string Tipo { get; set; } = null!;
+    [MaxLength(255)] public string NombreOriginal { get; set; } = null!;
+    [MaxLength(255)] public string NombreArchivo { get; set; } = null!;  // nombre en disco (guid + ext)
+    [MaxLength(120)] public string ContentType { get; set; } = null!;
+    public long TamanoBytes { get; set; }
+    public DateTime CreadoEn { get; set; }
+}
+
 // Gestión del desempeño (DATO SENSIBLE: solo RRHH/ADMIN). Una fila por evento:
 // evaluación, amonestación, felicitación, promoción o capacitación interna.
 [Table("EventoDesempeno")]
