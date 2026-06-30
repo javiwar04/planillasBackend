@@ -41,7 +41,9 @@ public record EmpleadoDto(
     DateOnly? AptitudMedicaVence,
     DateOnly? CarnetManipuladorVence,
     string? Alergias,
+    DateOnly? FechaNacimiento,
     DateOnly? FechaIngreso,
+    DateOnly? FechaFinContrato,
     DateOnly? FechaBaja,
     bool Activo);
 
@@ -76,7 +78,9 @@ public record EmpleadoCreateDto(
     DateOnly? AptitudMedicaVence,
     DateOnly? CarnetManipuladorVence,
     string? Alergias,
-    DateOnly? FechaIngreso);
+    DateOnly? FechaNacimiento,
+    DateOnly? FechaIngreso,
+    DateOnly? FechaFinContrato);
 
 // --- Perfil profesional (idiomas / formación / certificaciones) ---
 public record FormacionDto(int EmpleadoFormacionId, int EmpleadoId, string Tipo, string Descripcion, string? Detalle, int? Anio);

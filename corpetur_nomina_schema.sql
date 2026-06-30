@@ -95,7 +95,9 @@ CREATE TABLE dbo.Empleado (
     CarnetManipuladorVence       DATE          NULL,       -- vence carnet de manipulador de alimentos
     Alergias                     NVARCHAR(250) NULL,
 
+    FechaNacimiento     DATE          NULL,
     FechaIngreso        DATE          NULL,
+    FechaFinContrato    DATE          NULL,   -- vencimiento de contrato temporal
     FechaBaja           DATE          NULL,
     Activo              BIT           NOT NULL DEFAULT 1,
 

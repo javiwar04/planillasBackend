@@ -90,7 +90,9 @@ public class Empleado
     public DateOnly? CarnetManipuladorVence { get; set; }   // carnet de manipulador de alimentos
     [MaxLength(250)] public string? Alergias { get; set; }
 
+    public DateOnly? FechaNacimiento { get; set; }
     public DateOnly? FechaIngreso { get; set; }
+    public DateOnly? FechaFinContrato { get; set; }   // para contratos temporales (vencimiento)
     public DateOnly? FechaBaja { get; set; }
     public bool Activo { get; set; } = true;
 

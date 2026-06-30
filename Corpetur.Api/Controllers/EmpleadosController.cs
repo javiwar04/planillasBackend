@@ -93,7 +93,9 @@ public class EmpleadosController : ControllerBase
             AptitudMedicaVence = dto.AptitudMedicaVence,
             CarnetManipuladorVence = dto.CarnetManipuladorVence,
             Alergias = dto.Alergias,
-            FechaIngreso = dto.FechaIngreso
+            FechaNacimiento = dto.FechaNacimiento,
+            FechaIngreso = dto.FechaIngreso,
+            FechaFinContrato = dto.FechaFinContrato
         };
         _db.Empleados.Add(e);
         await _db.SaveChangesAsync();
@@ -129,7 +131,9 @@ public class EmpleadosController : ControllerBase
         e.AptitudMedicaVence = dto.AptitudMedicaVence;
         e.CarnetManipuladorVence = dto.CarnetManipuladorVence;
         e.Alergias = dto.Alergias;
+        e.FechaNacimiento = dto.FechaNacimiento;
         e.FechaIngreso = dto.FechaIngreso;
+        e.FechaFinContrato = dto.FechaFinContrato;
         e.ActualizadoEn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return NoContent();
@@ -240,5 +244,5 @@ public class EmpleadosController : ControllerBase
         e.Telefono, e.Email, e.Direccion, e.NoAfiliacionIgss, e.NoPolizaSeguro, e.TipoSangre,
         e.ContactoEmergenciaNombre, e.ContactoEmergenciaParentesco, e.ContactoEmergenciaTelefono,
         e.AptitudMedicaVence, e.CarnetManipuladorVence, e.Alergias,
-        e.FechaIngreso, e.FechaBaja, e.Activo);
+        e.FechaNacimiento, e.FechaIngreso, e.FechaFinContrato, e.FechaBaja, e.Activo);
 }
