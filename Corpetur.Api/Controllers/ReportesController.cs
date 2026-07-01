@@ -51,7 +51,7 @@ public class ReportesController : ControllerBase
                 var sueldos = Sum(c => c == "SUELDO");
                 var horas = Sum(c => c == "HORAS_EXTRA");
                 var bonoDecreto = Sum(c => c == "BONO_INC");
-                var otrasBon = Sum(c => c == "BONO_OTRO");
+                var otrasBon = Sum(c => c == "BONO_OTRO" || c == "BONO_FIJA");
                 var comisiones = Sum(c => c == "COMISION");
                 var propinas = Sum(c => c.Contains("PROPINA"));
                 var aguinaldo = Sum(c => c.Contains("AGUINALDO"));
@@ -70,7 +70,7 @@ public class ReportesController : ControllerBase
                 // Lo demás de naturaleza INGRESO que no encajó en una casilla.
                 var clasificados = new HashSet<string>
                 {
-                    "SUELDO", "HORAS_EXTRA", "BONO_INC", "BONO_OTRO", "COMISION",
+                    "SUELDO", "HORAS_EXTRA", "BONO_INC", "BONO_OTRO", "BONO_FIJA", "COMISION",
                     "VIATICOS", "GASTO_REP", "DIETAS", "GRATIFIC",
                 };
                 var otros = g.Where(x =>

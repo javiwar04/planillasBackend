@@ -68,10 +68,9 @@ public class Empleado
     [Column(TypeName = "decimal(14,2)")] public decimal IsrDeduccionAdicional { get; set; }
 
     [Column(TypeName = "decimal(14,2)")] public decimal SueldoBase { get; set; }
-    // Bonificación mensual fija de la persona (bonificación incentivo Dto. 37-2001
-    // + lo adicional que la empresa decida). Va como "Bonif. Ley 37-2001" en la
-    // planilla y es exenta de IGSS. NO incluye propina/comisión (esas son aparte).
-    [Column(TypeName = "decimal(14,2)")] public decimal Bonificacion { get; set; } = 250m;
+    // Bonificación EXTRA mensual que decide la empresa (aparte de la de ley Q250,
+    // que se agrega sola, y de propina/comisión). Exenta de IGSS. Default 0.
+    [Column(TypeName = "decimal(14,2)")] public decimal Bonificacion { get; set; }
     // Anticipo estándar de quincena acordado por persona (default Q1,200 en SQL).
     // No aplica a EXTRA (efectivo). Ver regla de quincena en CLAUDE.md.
     [Column(TypeName = "decimal(14,2)")] public decimal MontoQuincena { get; set; } = 1200m;

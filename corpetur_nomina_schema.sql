@@ -73,8 +73,9 @@ CREATE TABLE dbo.Empleado (
     IsrDeduccionAdicional DECIMAL(14,2) NOT NULL DEFAULT 0,  -- deducción ISR extra anual (seguros, colegios, donaciones)
 
     SueldoBase          DECIMAL(14,2) NOT NULL DEFAULT 0, -- mensual; para EXTRA puede ser pago/día o referencia
-    -- Bonificación mensual fija (incentivo Dto. 37-2001 + lo que la empresa decida); exenta de IGSS.
-    Bonificacion        DECIMAL(14,2) NOT NULL DEFAULT 250,
+    -- Bonificación EXTRA mensual que decide la empresa (aparte de la de ley Q250 y de
+    -- propina/comisión); exenta de IGSS. La de ley (Q250) se agrega sola en el fin de mes.
+    Bonificacion        DECIMAL(14,2) NOT NULL DEFAULT 0,
     -- Anticipo estándar de quincena, acordado por persona. La mayoría = Q1,200;
     -- se ajusta para las excepciones. No aplica a EXTRA (efectivo).
     MontoQuincena       DECIMAL(14,2) NOT NULL DEFAULT 1200,
@@ -434,6 +435,7 @@ INSERT INTO dbo.Establecimiento (Codigo, Nombre, EsEntidadContable) VALUES
 INSERT INTO dbo.Concepto (Codigo, Nombre, Naturaleza, EsCalculado, Orden) VALUES
  (N'SUELDO',        N'Sueldo base',                        N'INGRESO', 0, 10),
  (N'BONO_INC',      N'Bonificación incentivo Dto. 37-2001',N'INGRESO', 0, 20),
+ (N'BONO_FIJA',     N'Bonificación (empresa)',             N'INGRESO', 0, 25),
  (N'BONO_OTRO',     N'Otras bonificaciones',               N'INGRESO', 0, 30),
  (N'COMISION',      N'Comisión sobre venta',               N'INGRESO', 1, 40),
  (N'HORAS_EXTRA',   N'Horas extras',                       N'INGRESO', 0, 50),

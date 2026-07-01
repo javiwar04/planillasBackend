@@ -37,7 +37,8 @@ public class NominaService
     // Al regenerar se reemplazan estas y se respetan las líneas manuales.
     private const string COD_ANTICIPO_QUINCENA = "ANT_QUINCENA"; // INGRESO (boleta de quincena)
     private const string COD_SUELDO = "SUELDO";                  // INGRESO (fin de mes)
-    private const string COD_BONO = "BONO_INC";                  // INGRESO (fin de mes: bonificación fija)
+    private const string COD_BONO_LEY = "BONO_INC";              // INGRESO (fin de mes: bonif. de ley Q250, fija)
+    private const string COD_BONO_FIJA = "BONO_FIJA";            // INGRESO (fin de mes: bonif. extra de la empresa)
     private const string COD_IGSS = "IGSS";                      // EGRESO  (fin de mes)
     private const string COD_ANTICIPO = "ANTICIPO";              // EGRESO  (fin de mes: anticipo de quincena)
     private const string COD_COMISION = "COMISION";              // INGRESO (reparto de comisión)
@@ -45,7 +46,7 @@ public class NominaService
     private const string COD_BONO14 = "BONO14";                  // INGRESO (pago especial)
 
     private static readonly string[] ManejadosQuincena = { COD_ANTICIPO_QUINCENA };
-    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_BONO, COD_IGSS, COD_ANTICIPO };
+    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_BONO_LEY, COD_BONO_FIJA, COD_IGSS, COD_ANTICIPO };
 
     // ========================================================================
     //  GENERAR BOLETAS DE UN PERÍODO
@@ -89,10 +90,12 @@ public class NominaService
         else // FIN_MES
         {
             var cSueldo = await GetConceptoAsync(COD_SUELDO);
-            var cBono = await GetConceptoAsync(COD_BONO);
+            var cBonoLey = await GetConceptoAsync(COD_BONO_LEY);
+            var cBonoFija = await EnsureConceptoAsync(COD_BONO_FIJA, "Bonificación (empresa)", "INGRESO", esCalculado: false, orden: 25);
             var cIgss = await GetConceptoAsync(COD_IGSS);
             var cAnt = await GetConceptoAsync(COD_ANTICIPO);
             var tasaIgss = await GetTasaAsync("IGSS_LABORAL", 4.83m) / 100m;
+            var bonoLey = await GetTasaAsync("BONO_INCENTIVO", 250m);   // monto fijo de ley (Q)
 
             foreach (var emp in empleados)
             {
@@ -103,9 +106,13 @@ public class NominaService
                 // Ingreso: sueldo base del mes.
                 AgregarLinea(boleta, cSueldo, emp.SueldoBase, "Sueldo base");
 
-                // Ingreso: bonificación mensual fija (incentivo Dto. 37-2001 + lo que la empresa decida).
+                // Ingreso: bonificación de ley (Dto. 37-2001), monto fijo del parámetro.
+                if (bonoLey > 0)
+                    AgregarLinea(boleta, cBonoLey, bonoLey, "Bonificación Ley 37-2001");
+
+                // Ingreso: bonificación EXTRA que decide la empresa (por persona).
                 if (emp.Bonificacion > 0)
-                    AgregarLinea(boleta, cBono, emp.Bonificacion, "Bonificación Ley 37-2001");
+                    AgregarLinea(boleta, cBonoFija, emp.Bonificacion, "Bonificación (empresa)");
 
                 // Egreso: IGSS laboral sobre el sueldo base (la bonificación va exenta).
                 var igss = Math.Round(emp.SueldoBase * tasaIgss, 2, MidpointRounding.AwayFromZero);
