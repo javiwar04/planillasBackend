@@ -40,13 +40,14 @@ public class NominaService
     private const string COD_BONO_LEY = "BONO_INC";              // INGRESO (fin de mes: bonif. de ley Q250, fija)
     private const string COD_BONO_FIJA = "BONO_FIJA";            // INGRESO (fin de mes: bonif. extra de la empresa)
     private const string COD_IGSS = "IGSS";                      // EGRESO  (fin de mes)
+    private const string COD_ISR = "ISR";                        // EGRESO  (fin de mes: retención mensual por proyección)
     private const string COD_ANTICIPO = "ANTICIPO";              // EGRESO  (fin de mes: anticipo de quincena)
     private const string COD_COMISION = "COMISION";              // INGRESO (reparto de comisión)
     private const string COD_AGUINALDO = "AGUINALDO";            // INGRESO (pago especial)
     private const string COD_BONO14 = "BONO14";                  // INGRESO (pago especial)
 
     private static readonly string[] ManejadosQuincena = { COD_ANTICIPO_QUINCENA };
-    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_BONO_LEY, COD_BONO_FIJA, COD_IGSS, COD_ANTICIPO };
+    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_BONO_LEY, COD_BONO_FIJA, COD_IGSS, COD_ISR, COD_ANTICIPO };
 
     // ========================================================================
     //  GENERAR BOLETAS DE UN PERÍODO
@@ -93,9 +94,16 @@ public class NominaService
             var cBonoLey = await GetConceptoAsync(COD_BONO_LEY);
             var cBonoFija = await EnsureConceptoAsync(COD_BONO_FIJA, "Bonificación (empresa)", "INGRESO", esCalculado: false, orden: 25);
             var cIgss = await GetConceptoAsync(COD_IGSS);
+            var cIsr = await GetConceptoAsync(COD_ISR);
             var cAnt = await GetConceptoAsync(COD_ANTICIPO);
             var tasaIgss = await GetTasaAsync("IGSS_LABORAL", 4.83m) / 100m;
             var bonoLey = await GetTasaAsync("BONO_INCENTIVO", 250m);   // monto fijo de ley (Q)
+            // Parámetros del ISR (Régimen de Asalariados) para la retención mensual por proyección.
+            var isrDeduccion = await GetTasaAsync("ISR_DEDUCCION", 48000m);
+            var isrTasa1 = await GetTasaAsync("ISR_TASA1", 5m) / 100m;
+            var isrLimite1 = await GetTasaAsync("ISR_TRAMO1_LIMITE", 300000m);
+            var isrTasa2 = await GetTasaAsync("ISR_TASA2", 7m) / 100m;
+            var isrBase2 = await GetTasaAsync("ISR_TRAMO2_BASE", 15000m);
 
             foreach (var emp in empleados)
             {
@@ -117,6 +125,17 @@ public class NominaService
                 // Egreso: IGSS laboral sobre el sueldo base (la bonificación va exenta).
                 var igss = Math.Round(emp.SueldoBase * tasaIgss, 2, MidpointRounding.AwayFromZero);
                 if (igss > 0) AgregarLinea(boleta, cIgss, igss, "IGSS laboral");
+
+                // Egreso: retención mensual de ISR por PROYECCIÓN (Régimen de Asalariados).
+                // Se proyecta el año con el ingreso gravable fijo del mes (sueldo + bonif.
+                // de ley + bonif. de empresa), se calcula el ISR anual y se divide entre 12.
+                var gravableMes = emp.SueldoBase + bonoLey + emp.Bonificacion;
+                var rentaNetaAnual = Math.Max(0m, gravableMes * 12m - igss * 12m - isrDeduccion - emp.IsrDeduccionAdicional);
+                var isrAnual = rentaNetaAnual <= isrLimite1
+                    ? rentaNetaAnual * isrTasa1
+                    : isrBase2 + (rentaNetaAnual - isrLimite1) * isrTasa2;
+                var isrMes = Math.Round(isrAnual / 12m, 2, MidpointRounding.AwayFromZero);
+                if (isrMes > 0) AgregarLinea(boleta, cIsr, isrMes, "ISR (retención mensual)");
 
                 // Egreso: anticipo realmente pagado en la(s) quincena(s) del mismo mes.
                 var anticipo = await AnticipoQuincenaDelMesAsync(emp.EmpleadoId, periodo.Anio, periodo.Mes);
