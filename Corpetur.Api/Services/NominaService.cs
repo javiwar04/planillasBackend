@@ -37,6 +37,7 @@ public class NominaService
     // Al regenerar se reemplazan estas y se respetan las líneas manuales.
     private const string COD_ANTICIPO_QUINCENA = "ANT_QUINCENA"; // INGRESO (boleta de quincena)
     private const string COD_SUELDO = "SUELDO";                  // INGRESO (fin de mes)
+    private const string COD_BONO = "BONO_INC";                  // INGRESO (fin de mes: bonificación fija)
     private const string COD_IGSS = "IGSS";                      // EGRESO  (fin de mes)
     private const string COD_ANTICIPO = "ANTICIPO";              // EGRESO  (fin de mes: anticipo de quincena)
     private const string COD_COMISION = "COMISION";              // INGRESO (reparto de comisión)
@@ -44,7 +45,7 @@ public class NominaService
     private const string COD_BONO14 = "BONO14";                  // INGRESO (pago especial)
 
     private static readonly string[] ManejadosQuincena = { COD_ANTICIPO_QUINCENA };
-    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_IGSS, COD_ANTICIPO };
+    private static readonly string[] ManejadosFinMes = { COD_SUELDO, COD_BONO, COD_IGSS, COD_ANTICIPO };
 
     // ========================================================================
     //  GENERAR BOLETAS DE UN PERÍODO
@@ -88,6 +89,7 @@ public class NominaService
         else // FIN_MES
         {
             var cSueldo = await GetConceptoAsync(COD_SUELDO);
+            var cBono = await GetConceptoAsync(COD_BONO);
             var cIgss = await GetConceptoAsync(COD_IGSS);
             var cAnt = await GetConceptoAsync(COD_ANTICIPO);
             var tasaIgss = await GetTasaAsync("IGSS_LABORAL", 4.83m) / 100m;
@@ -100,6 +102,10 @@ public class NominaService
 
                 // Ingreso: sueldo base del mes.
                 AgregarLinea(boleta, cSueldo, emp.SueldoBase, "Sueldo base");
+
+                // Ingreso: bonificación mensual fija (incentivo Dto. 37-2001 + lo que la empresa decida).
+                if (emp.Bonificacion > 0)
+                    AgregarLinea(boleta, cBono, emp.Bonificacion, "Bonificación Ley 37-2001");
 
                 // Egreso: IGSS laboral sobre el sueldo base (la bonificación va exenta).
                 var igss = Math.Round(emp.SueldoBase * tasaIgss, 2, MidpointRounding.AwayFromZero);

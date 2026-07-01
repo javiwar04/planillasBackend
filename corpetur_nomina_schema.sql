@@ -73,6 +73,8 @@ CREATE TABLE dbo.Empleado (
     IsrDeduccionAdicional DECIMAL(14,2) NOT NULL DEFAULT 0,  -- deducción ISR extra anual (seguros, colegios, donaciones)
 
     SueldoBase          DECIMAL(14,2) NOT NULL DEFAULT 0, -- mensual; para EXTRA puede ser pago/día o referencia
+    -- Bonificación mensual fija (incentivo Dto. 37-2001 + lo que la empresa decida); exenta de IGSS.
+    Bonificacion        DECIMAL(14,2) NOT NULL DEFAULT 250,
     -- Anticipo estándar de quincena, acordado por persona. La mayoría = Q1,200;
     -- se ajusta para las excepciones. No aplica a EXTRA (efectivo).
     MontoQuincena       DECIMAL(14,2) NOT NULL DEFAULT 1200,

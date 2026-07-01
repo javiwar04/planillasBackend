@@ -81,7 +81,7 @@ public class EmpleadosController : ControllerBase
             Codigo = dto.Codigo, Nombres = dto.Nombres, Apellidos = dto.Apellidos,
             Dpi = dto.Dpi, Nit = dto.Nit,
             EstablecimientoId = dto.EstablecimientoId, DepartamentoId = dto.DepartamentoId, PuestoId = dto.PuestoId,
-            Tipo = dto.Tipo, SueldoBase = dto.SueldoBase, MontoQuincena = dto.MontoQuincena,
+            Tipo = dto.Tipo, SueldoBase = dto.SueldoBase, Bonificacion = dto.Bonificacion, MontoQuincena = dto.MontoQuincena,
             Banco = dto.Banco, CuentaBanco = dto.CuentaBanco,
             Supervisor = dto.Supervisor, TipoContrato = dto.TipoContrato, Jornada = dto.Jornada, ConvenioColectivo = dto.ConvenioColectivo,
             IsrDeduccionAdicional = dto.IsrDeduccionAdicional,
@@ -119,7 +119,7 @@ public class EmpleadosController : ControllerBase
         e.Codigo = dto.Codigo; e.Nombres = dto.Nombres; e.Apellidos = dto.Apellidos;
         e.Dpi = dto.Dpi; e.Nit = dto.Nit;
         e.EstablecimientoId = dto.EstablecimientoId; e.DepartamentoId = dto.DepartamentoId; e.PuestoId = dto.PuestoId;
-        e.Tipo = dto.Tipo; e.SueldoBase = dto.SueldoBase; e.MontoQuincena = dto.MontoQuincena;
+        e.Tipo = dto.Tipo; e.SueldoBase = dto.SueldoBase; e.Bonificacion = dto.Bonificacion; e.MontoQuincena = dto.MontoQuincena;
         e.Banco = dto.Banco; e.CuentaBanco = dto.CuentaBanco;
         e.Supervisor = dto.Supervisor; e.TipoContrato = dto.TipoContrato; e.Jornada = dto.Jornada; e.ConvenioColectivo = dto.ConvenioColectivo;
         e.IsrDeduccionAdicional = dto.IsrDeduccionAdicional;
@@ -236,7 +236,7 @@ public class EmpleadosController : ControllerBase
         e.EmpleadoId, e.Codigo, e.Nombres, e.Apellidos, e.Dpi, e.Nit,
         e.EstablecimientoId, e.Establecimiento?.Nombre,
         e.DepartamentoId, e.Departamento?.Nombre,
-        e.PuestoId, e.Tipo, e.SueldoBase, e.MontoQuincena, e.Banco, e.CuentaBanco,
+        e.PuestoId, e.Tipo, e.SueldoBase, e.Bonificacion, e.MontoQuincena, e.Banco, e.CuentaBanco,
         e.Supervisor,
         // Supervisor efectivo: el override del empleado o, si no hay, el encargado del establecimiento.
         string.IsNullOrWhiteSpace(e.Supervisor) ? e.Establecimiento?.Encargado : e.Supervisor,
